@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Mail, Lock, Eye, EyeOff, Zap, Loader2, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Zap, Loader2, ArrowRight, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
 
@@ -13,7 +13,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || null;
 
-  const { signIn, isLoading } = useAuthStore();
+  const { signIn, isLoading, supabaseReady, connectionError } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,36 +26,52 @@ function LoginForm() {
     setError('');
 
     if (!email.trim()) {
-      setError('Please enter your email address.');
+      setError('Email address enter karein.');
       return;
     }
     if (!password.trim()) {
-      setError('Please enter your password.');
+      setError('Password enter karein.');
       return;
     }
 
     setIsSubmitting(true);
 
-    const { error: signInError } = await signIn(email, password);
+    try {
+      const { error: signInError } = await signIn(email, password);
 
-    if (signInError) {
-      setError(signInError);
+      if (signInError) {
+        setError(signInError);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Wait a moment for auth state to update
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const currentProfile = useAuthStore.getState().profile;
+      const currentUser = useAuthStore.getState().user;
+
+      if (!currentUser) {
+        setError('Login ho gaya lekin session nahi mila. Dobara try karein.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (redirect) {
+        router.push(redirect);
+      } else if (currentProfile?.role === 'worker') {
+        router.push('/worker');
+      } else if (currentProfile?.role === 'employer') {
+        router.push('/employer');
+      } else if (currentProfile?.role === 'admin') {
+        router.push('/admin');
+      } else {
+        // User exists but no profile - might need to complete profile
+        router.push('/');
+      }
+    } catch {
+      setError('Login mein masla aaya. Dobara try karein.');
       setIsSubmitting(false);
-      return;
-    }
-
-    const currentProfile = useAuthStore.getState().profile;
-
-    if (redirect) {
-      router.push(redirect);
-    } else if (currentProfile?.role === 'worker') {
-      router.push('/worker');
-    } else if (currentProfile?.role === 'employer') {
-      router.push('/employer');
-    } else if (currentProfile?.role === 'admin') {
-      router.push('/admin');
-    } else {
-      router.push('/');
     }
   };
 
@@ -84,11 +100,36 @@ function LoginForm() {
           </p>
         </div>
 
+        {/* Supabase Not Configured Warning */}
+        {!supabaseReady && (
+          <div className="mb-4 animate-fade-in rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
+              <div>
+                <p className="text-sm font-semibold text-red-400">Supabase Not Connected</p>
+                <p className="mt-1 text-xs text-white/50">
+                  Login nahi hoga jab tak Supabase configure nahi hota. Vercel mein environment variables add karein:
+                </p>
+                <code className="mt-2 block rounded-lg bg-black/30 p-2 text-[10px] text-red-300 font-mono">
+                  NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co<br />
+                  NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
+                </code>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="glass-card p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="animate-fade-in rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
                 {error}
+              </div>
+            )}
+
+            {connectionError && !error && (
+              <div className="animate-fade-in rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-400">
+                {connectionError}
               </div>
             )}
 
@@ -142,16 +183,21 @@ function LoginForm() {
 
             <button
               type="submit"
-              disabled={isSubmitting || isLoading}
+              disabled={isSubmitting || isLoading || !supabaseReady}
               className={cn(
                 'glass-button flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold',
-                (isSubmitting || isLoading) && 'pointer-events-none opacity-70'
+                (isSubmitting || isLoading || !supabaseReady) && 'pointer-events-none opacity-70'
               )}
             >
               {isSubmitting || isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Signing In...
+                </>
+              ) : !supabaseReady ? (
+                <>
+                  <AlertTriangle className="h-4 w-4" />
+                  Supabase Not Connected
                 </>
               ) : (
                 <>

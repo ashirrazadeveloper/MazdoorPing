@@ -17,6 +17,7 @@ import {
   Wrench,
   Check,
   ChevronLeft,
+  AlertTriangle,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { cn } from '@/lib/utils';
@@ -29,7 +30,7 @@ function RegisterForm() {
   const redirect = searchParams.get('redirect') || null;
   const preselectedRole = searchParams.get('role') as Role | null;
 
-  const { signUp, profile, isLoading } = useAuthStore();
+  const { signUp, profile, isLoading, supabaseReady } = useAuthStore();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -50,7 +51,7 @@ function RegisterForm() {
 
   // Redirect if already logged in with a role
   useEffect(() => {
-    if (profile?.role && !isSubmitting) {
+    if (profile?.role && !isSubmitting && !signupSuccess) {
       if (redirect) {
         router.push(redirect);
       } else if (profile.role === 'worker') {
@@ -61,54 +62,71 @@ function RegisterForm() {
         router.push('/admin');
       }
     }
-  }, [profile, redirect, router, isSubmitting]);
+  }, [profile, redirect, router, isSubmitting, signupSuccess]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (!role) {
-      setError('Please select whether you are a Worker or an Employer.');
+      setError('Worker ya Employer select karein.');
       return;
     }
     if (!fullName.trim()) {
-      setError('Please enter your full name.');
+      setError('Apna naam enter karein.');
       return;
     }
     if (!email.trim()) {
-      setError('Please enter your email address.');
+      setError('Email address enter karein.');
       return;
     }
     if (!phone.trim()) {
-      setError('Please enter your phone number.');
+      setError('Phone number enter karein.');
       return;
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters long.');
+      setError('Password kam az kam 8 characters ka hona chahiye.');
       return;
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError('Dono passwords match nahi karte.');
       return;
     }
     if (!agreed) {
-      setError('You must agree to the Terms of Service and Privacy Policy.');
+      setError('Terms of Service accept karein.');
       return;
     }
 
     setIsSubmitting(true);
 
-    const { error: signUpError } = await signUp(email, password, fullName.trim(), role, phone.trim());
+    try {
+      const { error: signUpError, needsConfirmation } = await signUp(email, password, fullName.trim(), role, phone.trim());
 
-    if (signUpError) {
-      setError(signUpError);
+      if (signUpError) {
+        setError(signUpError);
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (needsConfirmation) {
+        setSignupEmail(email);
+        setSignupSuccess(true);
+      } else {
+        // Auto-logged in, redirect
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const currentProfile = useAuthStore.getState().profile;
+        if (currentProfile?.role === 'worker') {
+          router.push('/worker');
+        } else if (currentProfile?.role === 'employer') {
+          router.push('/employer');
+        } else {
+          router.push('/');
+        }
+      }
+    } catch {
+      setError('Account create mein masla aaya. Dobara try karein.');
       setIsSubmitting(false);
-      return;
     }
-
-    // After successful signup, show confirmation
-    setSignupEmail(email);
-    setSignupSuccess(true);
   };
 
   if (signupSuccess) {
@@ -119,15 +137,15 @@ function RegisterForm() {
           <div className="absolute bottom-1/3 right-1/4 h-[500px] w-[500px] rounded-full bg-blue-500/5 blur-[120px]" />
         </div>
         <div className="relative w-full max-w-md animate-fade-in">
- <div className="glass-card p-8 sm:p-10 text-center">
+          <div className="glass-card p-8 sm:p-10 text-center">
             <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/20">
               <svg className="h-8 w-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">Check Your Email</h2>
+            <h2 className="text-2xl font-bold text-white mb-2">Email Check Karein!</h2>
             <p className="text-white/50 text-sm mb-6">
-              We have sent a confirmation link to
+              Humne confirmation link bheja hai is email par:
             </p>
             <div className="glass-input px-4 py-3 rounded-xl mb-8">
               <p className="text-emerald-400 font-medium text-sm truncate">{signupEmail}</p>
@@ -138,8 +156,8 @@ function RegisterForm() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                 </svg>
                 <div className="text-left">
-                  <p className="text-sm font-medium text-blue-400">Important</p>
-                  <p className="text-xs text-white/40 mt-0.5">Click the confirmation link in your email to activate your account. Check your spam folder if you don't see it.</p>
+                  <p className="text-sm font-medium text-blue-400">Zaroori</p>
+                  <p className="text-xs text-white/40 mt-0.5">Email mein aayi confirmation link par click karein account activate karne ke liye. Agar email nahi aaya toh spam folder check karein.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
@@ -148,7 +166,7 @@ function RegisterForm() {
                 </svg>
                 <div className="text-left">
                   <p className="text-sm font-medium text-amber-400">Worker Verification</p>
-                  <p className="text-xs text-white/40 mt-0.5">If you signed up as a Worker, your profile will be reviewed by our team before activation.</p>
+                  <p className="text-xs text-white/40 mt-0.5">Agar Worker ki taraf se sign up kiya hai toh profile verify hone tak wait karna hoga.</p>
                 </div>
               </div>
             </div>
@@ -157,13 +175,13 @@ function RegisterForm() {
                 onClick={() => router.push('/login')}
                 className="glass-button w-full py-3 text-sm font-semibold"
               >
-                Go to Login
+                Login Page Par Jayen
               </button>
               <button
                 onClick={() => { setSignupSuccess(false); setSignupEmail(''); }}
                 className="w-full py-2.5 text-sm font-medium text-white/50 hover:text-white/70 transition-colors"
               >
-                Sign up with a different email
+                Dusri email se sign up karein
               </button>
             </div>
           </div>
@@ -174,14 +192,12 @@ function RegisterForm() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center px-4 py-12 sm:px-6">
-      {/* Background effects */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute left-1/4 top-1/3 h-[500px] w-[500px] rounded-full bg-emerald-500/5 blur-[120px]" />
         <div className="absolute bottom-1/3 right-1/4 h-[500px] w-[500px] rounded-full bg-blue-500/5 blur-[120px]" />
       </div>
 
       <div className="relative w-full max-w-md animate-fade-in">
-        {/* Logo */}
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-blue-500 shadow-lg shadow-emerald-500/20">
@@ -192,17 +208,34 @@ function RegisterForm() {
             </span>
           </Link>
           <h1 className="mt-6 text-2xl font-bold text-white sm:text-3xl">
-            Create Account
+            Account Banayein
           </h1>
           <p className="mt-2 text-sm text-white/50">
-            Join the platform connecting workers with employers
+            Workers aur employers ko connect karne wali platform
           </p>
         </div>
 
-        {/* Form Card */}
+        {/* Supabase Not Configured Warning */}
+        {!supabaseReady && (
+          <div className="mb-4 animate-fade-in rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
+              <div>
+                <p className="text-sm font-semibold text-red-400">Supabase Not Connected</p>
+                <p className="mt-1 text-xs text-white/50">
+                  Account create nahi hoga jab tak Supabase configure nahi hota. Vercel mein environment variables add karein:
+                </p>
+                <code className="mt-2 block rounded-lg bg-black/30 p-2 text-[10px] text-red-300 font-mono">
+                  NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co<br />
+                  NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
+                </code>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="glass-card p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Error message */}
             {error && (
               <div className="animate-fade-in rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
                 {error}
@@ -212,7 +245,7 @@ function RegisterForm() {
             {/* Role Selection */}
             <div className="space-y-3">
               <label className="block text-sm font-medium text-white/70">
-                I am a
+                Main hoon
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -233,9 +266,7 @@ function RegisterForm() {
                   <div
                     className={cn(
                       'flex h-12 w-12 items-center justify-center rounded-xl transition-colors',
-                      role === 'worker'
-                        ? 'bg-emerald-500/20'
-                        : 'bg-white/5'
+                      role === 'worker' ? 'bg-emerald-500/20' : 'bg-white/5'
                     )}
                   >
                     <Wrench
@@ -245,16 +276,11 @@ function RegisterForm() {
                       )}
                     />
                   </div>
-                  <span
-                    className={cn(
-                      'text-sm font-semibold transition-colors',
-                      role === 'worker' ? 'text-emerald-400' : 'text-white/60'
-                    )}
-                  >
+                  <span className={cn('text-sm font-semibold transition-colors', role === 'worker' ? 'text-emerald-400' : 'text-white/60')}>
                     Worker
                   </span>
                   <span className="text-center text-[11px] leading-tight text-white/30">
-                    Find jobs & earn money
+                    Jobs dhundhein aur paise kamayein
                   </span>
                 </button>
 
@@ -276,9 +302,7 @@ function RegisterForm() {
                   <div
                     className={cn(
                       'flex h-12 w-12 items-center justify-center rounded-xl transition-colors',
-                      role === 'employer'
-                        ? 'bg-blue-500/20'
-                        : 'bg-white/5'
+                      role === 'employer' ? 'bg-blue-500/20' : 'bg-white/5'
                     )}
                   >
                     <Briefcase
@@ -288,16 +312,11 @@ function RegisterForm() {
                       )}
                     />
                   </div>
-                  <span
-                    className={cn(
-                      'text-sm font-semibold transition-colors',
-                      role === 'employer' ? 'text-blue-400' : 'text-white/60'
-                    )}
-                  >
+                  <span className={cn('text-sm font-semibold transition-colors', role === 'employer' ? 'text-blue-400' : 'text-white/60')}>
                     Employer
                   </span>
                   <span className="text-center text-[11px] leading-tight text-white/30">
-                    Hire talent & grow
+                    Workers hire karein aur grow karein
                   </span>
                 </button>
               </div>
@@ -306,7 +325,7 @@ function RegisterForm() {
             {/* Full Name */}
             <div className="space-y-2">
               <label htmlFor="fullName" className="block text-sm font-medium text-white/70">
-                Full Name
+                Poora Naam
               </label>
               <div className="relative">
                 <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
@@ -372,7 +391,7 @@ function RegisterForm() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Min. 8 characters"
+                  placeholder="Kam az kam 8 characters"
                   autoComplete="new-password"
                   className="glass-input w-full py-3 pl-10 pr-12 text-sm text-white placeholder:text-white/25"
                 />
@@ -382,14 +401,9 @@ function RegisterForm() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 transition-colors hover:text-white/60"
                   tabIndex={-1}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {/* Password strength indicator */}
               {password.length > 0 && (
                 <div className="flex gap-1.5">
                   {[1, 2, 3, 4].map((level) => (
@@ -398,11 +412,7 @@ function RegisterForm() {
                       className={cn(
                         'h-1 flex-1 rounded-full transition-all',
                         password.length >= level * 3
-                          ? password.length >= 12
-                            ? 'bg-emerald-500'
-                            : password.length >= 8
-                              ? 'bg-amber-500'
-                              : 'bg-red-500'
+                          ? password.length >= 12 ? 'bg-emerald-500' : password.length >= 8 ? 'bg-amber-500' : 'bg-red-500'
                           : 'bg-white/10'
                       )}
                     />
@@ -414,7 +424,7 @@ function RegisterForm() {
             {/* Confirm Password */}
             <div className="space-y-2">
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/70">
-                Confirm Password
+                Password Dobara Likhein
               </label>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
@@ -423,13 +433,11 @@ function RegisterForm() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Re-enter your password"
+                  placeholder="Password dobara enter karein"
                   autoComplete="new-password"
                   className={cn(
                     'glass-input w-full py-3 pl-10 pr-12 text-sm text-white placeholder:text-white/25',
-                    confirmPassword.length > 0 &&
-                      confirmPassword !== password &&
-                      'border-red-500/30 focus:border-red-500/50 focus:ring-red-500/15'
+                    confirmPassword.length > 0 && confirmPassword !== password && 'border-red-500/30 focus:border-red-500/50 focus:ring-red-500/15'
                   )}
                 />
                 <button
@@ -438,15 +446,11 @@ function RegisterForm() {
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 transition-colors hover:text-white/60"
                   tabIndex={-1}
                 >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
               {confirmPassword.length > 0 && confirmPassword !== password && (
-                <p className="text-xs text-red-400">Passwords do not match</p>
+                <p className="text-xs text-red-400">Passwords match nahi karte</p>
               )}
             </div>
 
@@ -465,43 +469,48 @@ function RegisterForm() {
                 {agreed && <Check className="h-3 w-3 text-emerald-400" />}
               </button>
               <p className="text-xs leading-relaxed text-white/40">
-                I agree to the{' '}
+                Main{' '}
                 <a href="#" className="font-medium text-emerald-400 transition-colors hover:text-emerald-300">
                   Terms of Service
                 </a>{' '}
-                and{' '}
+                aur{' '}
                 <a href="#" className="font-medium text-emerald-400 transition-colors hover:text-emerald-300">
                   Privacy Policy
-                </a>
+                </a>{' '}
+                se agree karta/karti hoon
               </p>
             </div>
 
             {/* Submit */}
             <button
               type="submit"
-              disabled={isSubmitting || isLoading}
+              disabled={isSubmitting || isLoading || !supabaseReady}
               className={cn(
                 'glass-button flex w-full items-center justify-center gap-2 py-3.5 text-sm font-semibold',
-                (isSubmitting || isLoading) && 'pointer-events-none opacity-70'
+                (isSubmitting || isLoading || !supabaseReady) && 'pointer-events-none opacity-70'
               )}
             >
               {isSubmitting || isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Creating Account...
+                  Account Bana Rahay Hain...
+                </>
+              ) : !supabaseReady ? (
+                <>
+                  <AlertTriangle className="h-4 w-4" />
+                  Supabase Not Connected
                 </>
               ) : (
                 <>
-                  Create Account
+                  Account Banayein
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
             </button>
           </form>
 
-          {/* Login link */}
           <p className="mt-6 text-center text-sm text-white/50">
-            Already have an account?{' '}
+            Pehle se account hai?{' '}
             <Link
               href={redirect ? `/login?redirect=${encodeURIComponent(redirect)}` : '/login'}
               className="font-semibold text-emerald-400 transition-colors hover:text-emerald-300"
@@ -511,14 +520,13 @@ function RegisterForm() {
           </p>
         </div>
 
-        {/* Back to home */}
         <div className="mt-6 text-center">
           <Link
             href="/"
             className="inline-flex items-center gap-1 text-xs text-white/30 transition-colors hover:text-white/60"
           >
             <ChevronLeft className="h-3 w-3" />
-            Back to home
+            Wapas home par
           </Link>
         </div>
       </div>
