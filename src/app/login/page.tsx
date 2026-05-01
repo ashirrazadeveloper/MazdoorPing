@@ -45,30 +45,28 @@ function LoginForm() {
         return;
       }
 
-      // Wait a moment for auth state to update
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for cookies to be set, then do FULL page navigation
+      // (not router.push - we need fresh cookies sent to server)
+      await new Promise(resolve => setTimeout(resolve, 800));
 
-      const currentProfile = useAuthStore.getState().profile;
-      const currentUser = useAuthStore.getState().user;
-
-      if (!currentUser) {
-        setError('Login ho gaya lekin session nahi mila. Dobara try karein.');
-        setIsSubmitting(false);
-        return;
-      }
-
+      // Use window.location for full page reload - ensures cookies are sent
       if (redirect) {
-        router.push(redirect);
-      } else if (currentProfile?.role === 'worker') {
-        router.push('/worker');
-      } else if (currentProfile?.role === 'employer') {
-        router.push('/employer');
-      } else if (currentProfile?.role === 'admin') {
-        router.push('/admin');
+        window.location.href = redirect;
       } else {
-        // User exists but no profile - might need to complete profile
-        router.push('/');
+        // Try to get role from profile, fallback to home
+        const currentProfile = useAuthStore.getState().profile;
+        const role = currentProfile?.role;
+        if (role === 'worker') {
+          window.location.href = '/worker';
+        } else if (role === 'employer') {
+          window.location.href = '/employer';
+        } else if (role === 'admin') {
+          window.location.href = '/admin';
+        } else {
+          window.location.href = '/';
+        }
       }
+      // Don't set isSubmitting to false - page will navigate away
     } catch {
       setError('Login mein masla aaya. Dobara try karein.');
       setIsSubmitting(false);
