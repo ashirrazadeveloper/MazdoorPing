@@ -1,0 +1,239 @@
+@import "tailwindcss";
+
+:root {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 263.4 70% 50.4%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 263.4 70% 50.4%;
+  --radius: 0.75rem;
+
+  /* Worker theme - Green */
+  --worker: 142.1 76.2% 36.3%;
+  --worker-light: 142.1 76.2% 46%;
+  --worker-dark: 142.1 76.2% 26%;
+  --worker-glow: 142.1 76.2% 36.3% / 0.3;
+
+  /* Employer theme - Blue */
+  --employer: 217.2 91.2% 59.8%;
+  --employer-light: 217.2 91.2% 69%;
+  --employer-dark: 217.2 91.2% 49%;
+  --employer-glow: 217.2 91.2% 59.8% / 0.3;
+
+  /* Admin theme - Orange */
+  --admin: 24.6 95% 53.1%;
+  --admin-light: 24.6 95% 63%;
+  --admin-dark: 24.6 95% 43%;
+  --admin-glow: 24.6 95% 53.1% / 0.3;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* Glassmorphism utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.glass-sidebar {
+  background: rgba(10, 10, 20, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-input {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  color: hsl(var(--foreground));
+  transition: all 0.2s ease;
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.glass-input::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+
+.glass-button {
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.glass-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px hsl(var(--primary) / 0.4);
+}
+
+/* Gradient backgrounds */
+.bg-mesh {
+  background:
+    radial-gradient(at 20% 80%, hsl(var(--worker) / 0.08) 0%, transparent 50%),
+    radial-gradient(at 80% 20%, hsl(var(--employer) / 0.08) 0%, transparent 50%),
+    radial-gradient(at 50% 50%, hsl(var(--primary) / 0.04) 0%, transparent 50%),
+    hsl(var(--background));
+}
+
+.bg-mesh-worker {
+  background:
+    radial-gradient(at 20% 80%, hsl(var(--worker) / 0.12) 0%, transparent 50%),
+    radial-gradient(at 80% 20%, hsl(var(--worker) / 0.06) 0%, transparent 50%),
+    hsl(var(--background));
+}
+
+.bg-mesh-employer {
+  background:
+    radial-gradient(at 20% 80%, hsl(var(--employer) / 0.12) 0%, transparent 50%),
+    radial-gradient(at 80% 20%, hsl(var(--employer) / 0.06) 0%, transparent 50%),
+    hsl(var(--background));
+}
+
+.bg-mesh-admin {
+  background:
+    radial-gradient(at 20% 80%, hsl(var(--admin) / 0.12) 0%, transparent 50%),
+    radial-gradient(at 80% 20%, hsl(var(--admin) / 0.06) 0%, transparent 50%),
+    hsl(var(--background));
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px hsl(var(--worker-glow)); }
+  50% { box-shadow: 0 0 40px hsl(var(--worker-glow)); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out forwards;
+}
+
+/* Stat card glow effects */
+.glow-green { box-shadow: 0 0 30px hsl(var(--worker-glow)); }
+.glow-blue { box-shadow: 0 0 30px hsl(var(--employer-glow)); }
+.glow-orange { box-shadow: 0 0 30px hsl(var(--admin-glow)); }
+.glow-purple { box-shadow: 0 0 30px hsl(var(--primary) / 0.3); }
+
+/* Status badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+/* Custom scrollbar for lists */
+.custom-scrollbar {
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+}
+
+/* Skeleton loading */
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.5rem;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
