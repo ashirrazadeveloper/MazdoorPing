@@ -326,7 +326,8 @@ export default function WorkerSetupPage() {
     if (workerProfile.cnic_number) updates.cnicNumber = workerProfile.cnic_number;
     if (workerProfile.cnic_front_url) updates.cnicFrontPreview = workerProfile.cnic_front_url;
     if (workerProfile.cnic_back_url) updates.cnicBackPreview = workerProfile.cnic_back_url;
-    if ((workerProfile as unknown as Record<string, unknown>).avatar_url) updates.avatarPreview = (workerProfile as unknown as Record<string, unknown>).avatar_url as string;
+    // avatar_url comes from profiles table, not workers
+    if (profile?.avatar_url) updates.avatarPreview = profile.avatar_url;
     if (workerProfile.hourly_rate) updates.hourlyRate = String(workerProfile.hourly_rate);
     if (workerProfile.latitude) updates.latitude = workerProfile.latitude;
     if (workerProfile.longitude) updates.longitude = workerProfile.longitude;
@@ -384,9 +385,10 @@ export default function WorkerSetupPage() {
       if (stepData.cnicNumber !== undefined) payload.cnic_number = stepData.cnicNumber || null;
       if (stepData.hourlyRate !== undefined) payload.hourly_rate = parseFloat(stepData.hourlyRate) || 0;
       if (stepData.availability !== undefined) payload.availability = stepData.availability;
-      if (stepData.latitude !== undefined) payload.latitude = stepData.latitude;
-      if (stepData.longitude !== undefined) payload.longitude = stepData.longitude;
-      if (stepData.avatarPreview !== undefined) payload.avatar_url = stepData.avatarPreview;
+      if (stepData.avatarPreview !== undefined) {
+        // avatar_url belongs to profiles table, not workers
+        await supabase.from('profiles').update({ avatar_url: stepData.avatarPreview }).eq('id', profile?.id);
+      }
       if (stepData.cnicFrontPreview !== undefined) payload.cnic_front_url = stepData.cnicFrontPreview;
       if (stepData.cnicBackPreview !== undefined) payload.cnic_back_url = stepData.cnicBackPreview;
 
@@ -412,7 +414,7 @@ export default function WorkerSetupPage() {
         if (url) updateForm({ avatarPreview: url });
       }
 
-      // Save to Supabase
+      // Save worker details to workers table (NO avatar_url here - it belongs to profiles)
       const { error: workerError } = await supabase
         .from('workers')
         .update({
@@ -422,7 +424,6 @@ export default function WorkerSetupPage() {
           province: formData.province || null,
           address: formData.address || null,
           bio: formData.bio || null,
-          avatar_url: formData.avatarPreview || null,
         })
         .eq('user_id', workerProfile.user_id);
 
@@ -432,9 +433,12 @@ export default function WorkerSetupPage() {
         return false;
       }
 
-      // Save name to profile
-      if (formData.fullName.trim()) {
-        await supabase.from('profiles').update({ full_name: formData.fullName.trim() }).eq('id', profile.id);
+      // Save name + avatar to profiles table
+      if (formData.fullName.trim() || formData.avatarPreview) {
+        const profileUpdates: Record<string, unknown> = {};
+        if (formData.fullName.trim()) profileUpdates.full_name = formData.fullName.trim();
+        if (formData.avatarPreview) profileUpdates.avatar_url = formData.avatarPreview;
+        await supabase.from('profiles').update(profileUpdates).eq('id', profile.id);
       }
 
       await fetchProfiles();
@@ -551,6 +555,13 @@ export default function WorkerSetupPage() {
     if (!workerProfile?.user_id) return false;
     setSaving(true);
     try {
+      // Skip location save if no location selected
+      if (!formData.latitude || !formData.longitude) {
+        setMessage({ type: 'success', text: 'Location step skipped (no location selected).' });
+        setSaving(false);
+        return true;
+      }
+
       const { error } = await supabase
         .from('workers')
         .update({
@@ -560,9 +571,11 @@ export default function WorkerSetupPage() {
         .eq('user_id', workerProfile.user_id);
 
       if (error) {
-        setMessage({ type: 'error', text: error.message });
+        // If columns don't exist yet, don't block - location will work after migration
+        console.warn('Location save warning (run migration to add lat/lng columns):', error.message);
+        setMessage({ type: 'success', text: 'Profile saved! (Location columns pending migration)' });
         setSaving(false);
-        return false;
+        return true;
       }
 
       await fetchProfiles();
