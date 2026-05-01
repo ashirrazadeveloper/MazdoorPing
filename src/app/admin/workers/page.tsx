@@ -40,6 +40,7 @@ export default function WorkersPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [cnicViewer, setCnicViewer] = useState<{ url: string; label: string } | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -446,6 +447,58 @@ export default function WorkersPage() {
                 </div>
               </div>
 
+              {/* CNIC Documents Viewer */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-white/30 uppercase tracking-wider">CNIC Documents</p>
+                  {selectedWorker.cnic_front_url && selectedWorker.cnic_back_url ? (
+                    <span className="badge text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Documents Uploaded</span>
+                  ) : (
+                    <span className="badge text-xs bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Incomplete</span>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {/* CNIC Front */}
+                  <div>
+                    <p className="text-xs text-white/40 mb-1.5">Front Side</p>
+                    {selectedWorker.cnic_front_url ? (
+                      <div
+                        className="relative rounded-lg overflow-hidden border border-white/10 cursor-pointer group hover:border-white/20 transition-all"
+                        onClick={() => setCnicViewer({ url: selectedWorker.cnic_front_url!, label: 'CNIC Front' })}
+                      >
+                        <img src={selectedWorker.cnic_front_url} alt="CNIC Front" className="w-full h-32 object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Eye className="w-5 h-5 text-white" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="h-32 rounded-lg bg-white/[0.02] border border-white/5 flex items-center justify-center">
+                        <p className="text-xs text-white/20">Not uploaded</p>
+                      </div>
+                    )}
+                  </div>
+                  {/* CNIC Back */}
+                  <div>
+                    <p className="text-xs text-white/40 mb-1.5">Back Side</p>
+                    {selectedWorker.cnic_back_url ? (
+                      <div
+                        className="relative rounded-lg overflow-hidden border border-white/10 cursor-pointer group hover:border-white/20 transition-all"
+                        onClick={() => setCnicViewer({ url: selectedWorker.cnic_back_url!, label: 'CNIC Back' })}
+                      >
+                        <img src={selectedWorker.cnic_back_url} alt="CNIC Back" className="w-full h-32 object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Eye className="w-5 h-5 text-white" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="h-32 rounded-lg bg-white/[0.02] border border-white/5 flex items-center justify-center">
+                        <p className="text-xs text-white/20">Not uploaded</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-1">
                 <p className="text-xs text-white/30 uppercase tracking-wider">Bio</p>
                 <p className="text-sm text-white/60">{selectedWorker.bio || 'No bio provided'}</p>
@@ -483,6 +536,26 @@ export default function WorkersPage() {
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CNIC Image Lightbox */}
+      {cnicViewer && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={() => setCnicViewer(null)}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" />
+          <div className="relative max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setCnicViewer(null)}
+              className="absolute -top-12 right-0 p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-all"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <div className="glass-card p-4">
+              <p className="text-sm font-medium text-white/70 mb-3">{cnicViewer.label} — {selectedWorker?.profile?.full_name}</p>
+              <img src={cnicViewer.url} alt={cnicViewer.label} className="w-full rounded-lg" />
+              <p className="text-xs text-white/30 mt-2">CNIC: {selectedWorker?.cnic_number || 'N/A'}</p>
             </div>
           </div>
         </div>

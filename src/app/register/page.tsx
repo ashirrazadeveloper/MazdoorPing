@@ -112,15 +112,14 @@ function RegisterForm() {
         setSignupEmail(email);
         setSignupSuccess(true);
       } else {
-        // Auto-logged in, redirect
+        // Auto-logged in, redirect to setup page
         await new Promise(resolve => setTimeout(resolve, 500));
-        const currentProfile = useAuthStore.getState().profile;
-        if (currentProfile?.role === 'worker') {
-          router.push('/worker');
-        } else if (currentProfile?.role === 'employer') {
-          router.push('/employer');
+        if (role === 'worker') {
+          window.location.href = '/worker/setup';
+        } else if (role === 'employer') {
+          window.location.href = '/employer/setup';
         } else {
-          router.push('/');
+          window.location.href = '/';
         }
       }
     } catch {

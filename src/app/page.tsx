@@ -19,6 +19,7 @@ import {
   Zap,
   Globe,
   TrendingUp,
+  MapPin,
 } from 'lucide-react';
 
 const features = [
@@ -358,6 +359,70 @@ export default function Home() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Interactive Map Section */}
+      <section className="relative py-20 sm:py-28">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500/5 blur-[150px]" />
+        </div>
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto mb-12 max-w-2xl text-center">
+            <div className="animate-fade-in mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1">
+              <MapPin className="h-3.5 w-3.5 text-emerald-400" />
+              <span className="text-xs font-medium text-white/60">Available Across Pakistan</span>
+            </div>
+            <h2 className="animate-fade-in text-3xl font-bold text-white sm:text-4xl lg:text-5xl" style={{ animationDelay: '0.1s' }}>
+              Find Workers{' '}
+              <span className="bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
+                Near You
+              </span>
+            </h2>
+            <p className="animate-fade-in mt-4 text-base text-white/50 sm:text-lg" style={{ animationDelay: '0.2s' }}>
+              Workers available in all major cities across Pakistan. Real-time location tracking coming soon.
+            </p>
+          </div>
+
+          {/* City Cards Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            {[
+              { city: 'Lahore', workers: '2,400+', icon: '🏙️', active: true },
+              { city: 'Karachi', workers: '3,100+', icon: '🌊', active: true },
+              { city: 'Islamabad', workers: '1,800+', icon: '🕌', active: true },
+              { city: 'Rawalpindi', workers: '1,200+', icon: '🏗️', active: true },
+              { city: 'Faisalabad', workers: '950+', icon: '🏭', active: true },
+              { city: 'Multan', workers: '680+', icon: '☀️', active: true },
+              { city: 'Peshawar', workers: '520+', icon: '⛰️', active: true },
+              { city: 'Quetta', workers: '340+', icon: '🏔️', active: true },
+              { city: 'Sialkot', workers: '420+', icon: '⚽', active: false },
+              { city: 'Hyderabad', workers: '380+', icon: '🏛️', active: false },
+              { city: 'Abbottabad', workers: '290+', icon: '🌲', active: false },
+              { city: 'Gujranwala', workers: '310+', icon: '🔧', active: false },
+            ].map((item, index) => (
+              <div
+                key={item.city}
+                className="animate-fade-in glass-card group cursor-pointer p-4 sm:p-5 hover:border-emerald-500/30"
+                style={{ animationDelay: `${index * 0.05}s` }}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-2xl">{item.icon}</span>
+                  {item.active && (
+                    <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      Live
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-sm font-semibold text-white mb-1">{item.city}</h3>
+                <p className="text-xs text-white/40">{item.workers} workers</p>
+                <div className="mt-3 flex items-center gap-1 text-xs text-emerald-400/60 group-hover:text-emerald-400 transition-colors">
+                  <MapPin className="w-3 h-3" />
+                  <span>View workers</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

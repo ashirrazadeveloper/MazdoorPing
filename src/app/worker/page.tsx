@@ -5,7 +5,20 @@ import { useAuthStore } from '@/store/auth-store';
 import { supabase } from '@/lib/supabase';
 import { formatCurrency, timeAgo, getStatusColor } from '@/lib/utils';
 import { StatCard } from '@/components/shared/StatCard';
-import { Briefcase, DollarSign, Star, Eye, Clock, ArrowRight, ShieldAlert } from 'lucide-react';
+import MapWrapper from '@/components/shared/MapWrapper';
+import {
+  Briefcase,
+  DollarSign,
+  Star,
+  Eye,
+  Clock,
+  ArrowRight,
+  ShieldAlert,
+  UserCheck,
+  TrendingUp,
+  MessageSquare,
+  MapPin,
+} from 'lucide-react';
 import Link from 'next/link';
 import type { Job, Bid } from '@/types';
 
@@ -19,6 +32,8 @@ export default function WorkerDashboard() {
     totalEarnings: 0,
     rating: 0,
     profileViews: 0,
+    totalBids: 0,
+    successRate: 0,
   });
 
   useEffect(() => {
@@ -30,7 +45,7 @@ export default function WorkerDashboard() {
 
     async function fetchData() {
       try {
-        const [jobsRes, bidsRes, transactionsRes] = await Promise.all([
+        const [jobsRes, bidsRes, transactionsRes, allBidsRes] = await Promise.all([
           supabase
             .from('jobs')
             .select('*, category:categories(*)')
@@ -49,6 +64,10 @@ export default function WorkerDashboard() {
             .eq('to_user_id', wpUserId)
             .eq('type', 'credit')
             .eq('status', 'completed'),
+          supabase
+            .from('bids')
+            .select('status')
+            .eq('worker_id', wpId),
         ]);
 
         if (jobsRes.data) setRecentJobs(jobsRes.data as Job[]);
@@ -57,12 +76,18 @@ export default function WorkerDashboard() {
         const totalEarnings = transactionsRes.data?.reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
         const acceptedBids = bidsRes.data?.filter((b) => b.status === 'accepted') || [];
         const activeJobs = acceptedBids.length;
+        const allBids = allBidsRes.data || [];
+        const totalBidsCount = allBids.length;
+        const acceptedCount = allBids.filter((b) => b.status === 'accepted').length;
+        const successRate = totalBidsCount > 0 ? Math.round((acceptedCount / totalBidsCount) * 100) : 0;
 
         setStats({
           activeJobs,
           totalEarnings,
           rating: wpRating || 0,
           profileViews: wpCompletedJobs || 0,
+          totalBids: totalBidsCount,
+          successRate,
         });
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
@@ -74,15 +99,18 @@ export default function WorkerDashboard() {
     fetchData();
   }, [workerProfile?.id, workerProfile?.user_id, workerProfile?.rating, workerProfile?.completed_jobs]);
 
+  const isProfileIncomplete = workerProfile && (!workerProfile.cnic_number || !workerProfile.bio);
+  const hasLocation = workerProfile?.latitude && workerProfile?.longitude;
+
   if (loading) {
     return (
       <div className="space-y-6 animate-fade-in">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="glass-card p-6">
-              <div className="skeleton h-4 w-24 mb-3" />
-              <div className="skeleton h-8 w-16 mb-2" />
-              <div className="skeleton h-3 w-20" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="glass-card p-5">
+              <div className="skeleton h-4 w-20 mb-3" />
+              <div className="skeleton h-7 w-14 mb-2" />
+              <div className="skeleton h-3 w-16" />
             </div>
           ))}
         </div>
@@ -126,6 +154,39 @@ export default function WorkerDashboard() {
                 Your account is under review. You can browse jobs but cannot place bids until verified.
                 Please ensure your CNIC documents are uploaded in the profile section.
               </p>
+              <Link
+                href="/worker/profile"
+                className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-yellow-400 hover:text-yellow-300 transition-colors"
+              >
+                Go to Profile <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Complete Your Profile Banner */}
+      {isProfileIncomplete && workerProfile?.status !== 'active' && (
+        <div className="glass-card p-4 border-emerald-500/20 bg-gradient-to-r from-emerald-500/10 to-teal-500/5">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-emerald-500/20 shrink-0">
+              <UserCheck className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-emerald-400">Complete Your Profile to Get More Jobs</h3>
+              <p className="text-sm text-white/50 mt-1">
+                {!workerProfile.cnic_number && !workerProfile.bio
+                  ? 'Complete your profile setup with CNIC and bio to attract employers and get verified faster.'
+                  : !workerProfile.cnic_number
+                    ? 'Upload your CNIC documents through the setup wizard to get verified faster.'
+                    : 'Add a bio and complete your profile to stand out to employers.'}
+              </p>
+              <Link
+                href="/worker/setup"
+                className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
+              >
+                Complete Setup <ArrowRight className="w-3 h-3" />
+              </Link>
             </div>
           </div>
         </div>
@@ -149,46 +210,96 @@ export default function WorkerDashboard() {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stats Grid - 6 columns */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         <StatCard
           title="Active Jobs"
           value={stats.activeJobs}
-          icon={<Briefcase className="w-6 h-6" />}
+          icon={<Briefcase className="w-5 h-5" />}
           color="green"
-          change={`${workerProfile?.completed_jobs || 0} total completed`}
+          change={`${workerProfile?.completed_jobs || 0} completed`}
           changeType="up"
         />
         <StatCard
-          title="Total Earnings"
+          title="Earnings"
           value={formatCurrency(stats.totalEarnings)}
-          icon={<DollarSign className="w-6 h-6" />}
+          icon={<DollarSign className="w-5 h-5" />}
           color="blue"
-          change="Lifetime earnings"
+          change="Lifetime"
           changeType="up"
         />
         <StatCard
           title="Rating"
-          value={`${stats.rating.toFixed(1)} ★`}
-          icon={<Star className="w-6 h-6" />}
+          value={`${stats.rating.toFixed(1)}`}
+          icon={<Star className="w-5 h-5" />}
           color="yellow"
           change={`${workerProfile?.total_reviews || 0} reviews`}
           changeType="up"
         />
         <StatCard
-          title="Completed Jobs"
-          value={stats.profileViews}
-          icon={<Eye className="w-6 h-6" />}
+          title="Bids Placed"
+          value={stats.totalBids}
+          icon={<MessageSquare className="w-5 h-5" />}
           color="purple"
+          change={`${stats.successRate}% success`}
+          changeType="up"
+        />
+        <StatCard
+          title="Completed"
+          value={stats.profileViews}
+          icon={<Eye className="w-5 h-5" />}
+          color="green"
           change="All time"
+          changeType="up"
+        />
+        <StatCard
+          title="Success Rate"
+          value={`${stats.successRate}%`}
+          icon={<TrendingUp className="w-5 h-5" />}
+          color="blue"
+          change="Bid acceptance"
           changeType="up"
         />
       </div>
 
-      {/* Recent Sections */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Jobs */}
+      {/* Map + Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Worker Location Map */}
         <div className="glass-card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-emerald-400" />
+              My Location
+            </h2>
+          </div>
+          {hasLocation ? (
+            <MapWrapper
+              latitude={workerProfile!.latitude!}
+              longitude={workerProfile!.longitude!}
+              height="220px"
+              zoom={14}
+            />
+          ) : (
+            <div className="h-[220px] rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-center">
+              <div className="text-center">
+                <MapPin className="w-8 h-8 text-white/15 mx-auto mb-2" />
+                <p className="text-sm text-white/30">No location set</p>
+                <p className="text-xs text-white/20 mt-1">
+                  Add your location in the profile to appear on the map
+                </p>
+              </div>
+            </div>
+          )}
+          {workerProfile?.city && (
+            <p className="text-xs text-white/40 mt-3 flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5" />
+              {workerProfile.city}{workerProfile.province ? `, ${workerProfile.province}` : ''}
+            </p>
+          )}
+        </div>
+
+        {/* Recent Jobs */}
+        <div className="glass-card p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-white">Recent Jobs</h2>
             <Link
@@ -205,7 +316,7 @@ export default function WorkerDashboard() {
               <p className="text-white/20 text-xs mt-1">Check back later for new opportunities</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar pr-1">
               {recentJobs.map((job) => (
                 <Link
                   key={job.id}
@@ -223,6 +334,12 @@ export default function WorkerDashboard() {
                       <span className="text-xs text-white/40">{job.city}</span>
                       <span className="text-xs text-white/30">•</span>
                       <span className="text-xs text-white/40">{job.category?.name || 'General'}</span>
+                      {job.urgency === 'urgent' && (
+                        <>
+                          <span className="text-xs text-white/30">•</span>
+                          <span className="text-xs text-red-400 font-medium">Urgent</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="text-right shrink-0">
@@ -239,62 +356,62 @@ export default function WorkerDashboard() {
             </div>
           )}
         </div>
+      </div>
 
-        {/* Recent Bids */}
-        <div className="glass-card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">My Recent Bids</h2>
+      {/* Recent Bids */}
+      <div className="glass-card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-white">My Recent Bids</h2>
+          <Link
+            href="/worker/my-jobs"
+            className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+          >
+            View All <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+        {recentBids.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <Clock className="w-12 h-12 text-white/20 mb-3" />
+            <p className="text-white/40 text-sm">No bids placed yet</p>
+            <p className="text-white/20 text-xs mt-1">
+              Browse available jobs and start bidding!
+            </p>
             <Link
-              href="/worker/my-jobs"
-              className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
+              href="/worker/jobs"
+              className="mt-4 px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all"
             >
-              View All <ArrowRight className="w-4 h-4" />
+              Browse Jobs
             </Link>
           </div>
-          {recentBids.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <Clock className="w-12 h-12 text-white/20 mb-3" />
-              <p className="text-white/40 text-sm">No bids placed yet</p>
-              <p className="text-white/20 text-xs mt-1">
-                Browse available jobs and start bidding!
-              </p>
-              <Link
-                href="/worker/jobs"
-                className="mt-4 px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all"
+        ) : (
+          <div className="space-y-3">
+            {recentBids.map((bid) => (
+              <div
+                key={bid.id}
+                className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/5 transition-all"
               >
-                Browse Jobs
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentBids.map((bid) => (
-                <div
-                  key={bid.id}
-                  className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/5 transition-all"
-                >
-                  <div className="p-2.5 rounded-lg bg-blue-500/10 shrink-0">
-                    <DollarSign className="w-5 h-5 text-blue-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-medium text-white truncate">
-                      {bid.job?.title || 'Job'}
-                    </h3>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs text-white/40">
-                        Bid: {formatCurrency(bid.amount)}
-                      </span>
-                      <span className="text-xs text-white/30">•</span>
-                      <span className="text-xs text-white/40">{bid.estimated_days} days</span>
-                    </div>
-                  </div>
-                  <span className={`badge text-xs ${getStatusColor(bid.status)}`}>
-                    {bid.status}
-                  </span>
+                <div className="p-2.5 rounded-lg bg-blue-500/10 shrink-0">
+                  <DollarSign className="w-5 h-5 text-blue-400" />
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-medium text-white truncate">
+                    {bid.job?.title || 'Job'}
+                  </h3>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-xs text-white/40">
+                      Bid: {formatCurrency(bid.amount)}
+                    </span>
+                    <span className="text-xs text-white/30">•</span>
+                    <span className="text-xs text-white/40">{bid.estimated_days} days</span>
+                  </div>
+                </div>
+                <span className={`badge text-xs ${getStatusColor(bid.status)}`}>
+                  {bid.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

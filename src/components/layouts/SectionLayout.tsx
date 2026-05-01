@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Sidebar } from '@/components/layouts/Sidebar';
 import { BottomNav } from '@/components/layouts/BottomNav';
 import { AuthGuard } from '@/components/shared/AuthGuard';
 import { Menu, Bell, Search } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
+import { supabase } from '@/lib/supabase';
 import type { LucideIcon } from 'lucide-react';
 
 interface SectionLayoutProps {
@@ -21,6 +22,31 @@ interface SectionLayoutProps {
 export function SectionLayout({ children, sidebarItems, bottomNavItems, accentColor, title, meshBg }: SectionLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { profile } = useAuthStore();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    // Fetch unread count
+    async function fetchCount() {
+      try {
+        const { count } = await supabase
+          .from('notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', profile!.id)
+          .eq('is_read', false);
+        setUnreadCount(count || 0);
+      } catch {
+        // silent fail
+      }
+    }
+
+    fetchCount();
+
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchCount, 30000);
+    return () => clearInterval(interval);
+  }, [profile?.id]);
 
   return (
     <AuthGuard>
@@ -54,7 +80,11 @@ export function SectionLayout({ children, sidebarItems, bottomNavItems, accentCo
                 </button>
                 <Link href={`/${title.toLowerCase()}/notifications`} className="p-2.5 rounded-xl hover:bg-white/5 text-white/50 transition-all relative">
                   <Bell className="w-5 h-5" />
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                 </Link>
               </div>
             </div>

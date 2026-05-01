@@ -10,10 +10,25 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer,
+  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import type { DashboardStats, Worker, SOSAlert } from '@/types';
+
+const workerRegistrationData = [
+  { month: 'Jan', registrations: 45 },
+  { month: 'Feb', registrations: 62 },
+  { month: 'Mar', registrations: 38 },
+  { month: 'Apr', registrations: 71 },
+  { month: 'May', registrations: 55 },
+  { month: 'Jun', registrations: 89 },
+  { month: 'Jul', registrations: 76 },
+  { month: 'Aug', registrations: 94 },
+  { month: 'Sep', registrations: 68 },
+  { month: 'Oct', registrations: 103 },
+  { month: 'Nov', registrations: 87 },
+  { month: 'Dec', registrations: 112 },
+];
 
 const revenueData = [
   { month: 'Jan', revenue: 245000, transactions: 42 },
@@ -373,6 +388,131 @@ export default function AdminDashboard() {
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Worker Registration Trend */}
+      <div className="glass-card p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-lg font-semibold text-white">Worker Registration Trend</h2>
+            <p className="text-sm text-white/40 mt-1">
+              New worker sign-ups per month
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="flex items-center gap-1 text-emerald-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              Registrations
+            </span>
+          </div>
+        </div>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={workerRegistrationData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+              <XAxis
+                dataKey="month"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 12 }}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 12 }}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(15, 15, 25, 0.95)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '12px',
+                  color: '#fff',
+                  fontSize: '13px',
+                }}
+              />
+              <Bar dataKey="registrations" fill="#10b981" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Job Status Distribution */}
+        <div className="glass-card p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">Job Status Distribution</h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'Open', value: stats.openJobs, fill: '#3b82f6' },
+                    { name: 'In Progress', value: Math.floor(stats.totalJobs * 0.15), fill: '#f59e0b' },
+                    { name: 'Completed', value: stats.completedJobs, fill: '#10b981' },
+                    { name: 'Cancelled', value: Math.floor(stats.totalJobs * 0.05), fill: '#ef4444' },
+                  ]}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={90}
+                  paddingAngle={3}
+                  dataKey="value"
+                >
+                  {[
+                    { name: 'Open', fill: '#3b82f6' },
+                    { name: 'In Progress', fill: '#f59e0b' },
+                    { name: 'Completed', fill: '#10b981' },
+                    { name: 'Cancelled', fill: '#ef4444' },
+                  ].map((entry, index) => (
+                    <Cell key={index} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(15, 15, 25, 0.95)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '12px',
+                    color: '#fff',
+                    fontSize: '13px',
+                  }}
+                />
+                <Legend
+                  verticalAlign="bottom"
+                  height={36}
+                  formatter={(value: string) => (
+                    <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}>{value}</span>
+                  )}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Recent Activity Feed */}
+        <div className="glass-card p-6">
+          <h2 className="text-lg font-semibold text-white mb-4">Recent Activity</h2>
+          <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar pr-1">
+            {[
+              { type: 'worker', text: 'New worker registered', detail: 'Ahmed Khan from Lahore', time: '2 min ago', color: 'emerald' },
+              { type: 'job', text: 'New job posted', detail: 'Plumber needed for bathroom renovation', time: '5 min ago', color: 'blue' },
+              { type: 'payment', text: 'Payment completed', detail: 'PKR 15,000 for electrical work', time: '12 min ago', color: 'green' },
+              { type: 'verification', text: 'Worker verified', detail: 'Muhammad Ali - Electrician', time: '18 min ago', color: 'amber' },
+              { type: 'bid', text: 'New bid received', detail: 'Rs. 8,500 on Plumbing job', time: '25 min ago', color: 'purple' },
+              { type: 'sos', text: 'SOS alert resolved', detail: 'Worker safety confirmed', time: '30 min ago', color: 'red' },
+              { type: 'review', text: 'New review posted', detail: '5 stars for carpentry work', time: '45 min ago', color: 'yellow' },
+              { type: 'worker', text: 'Worker profile updated', detail: 'Skills added: Welding, AC Repair', time: '1h ago', color: 'emerald' },
+            ].map((activity, i) => (
+              <div key={i} className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/[0.02] transition-all">
+                <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 bg-${activity.color}-400`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-white/70">{activity.text}</p>
+                  <p className="text-xs text-white/30 truncate">{activity.detail}</p>
+                </div>
+                <span className="text-[10px] text-white/20 whitespace-nowrap">{activity.time}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

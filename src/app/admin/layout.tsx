@@ -2,11 +2,12 @@
 
 import { AuthGuard } from '@/components/shared/AuthGuard';
 import { SectionLayout } from '@/components/layouts/SectionLayout';
-import { LayoutDashboard, Users, Building2, Briefcase, Tag, DollarSign, AlertTriangle, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, Building2, Briefcase, Tag, DollarSign, AlertTriangle, Settings, ShieldCheck } from 'lucide-react';
 
 const sidebarItems = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { label: 'Workers', href: '/admin/workers', icon: Users },
+  { label: 'Verification', href: '/admin/verification', icon: ShieldCheck },
   { label: 'Employers', href: '/admin/employers', icon: Building2 },
   { label: 'Jobs', href: '/admin/jobs', icon: Briefcase },
   { label: 'Categories', href: '/admin/categories', icon: Tag },
@@ -17,8 +18,8 @@ const sidebarItems = [
 
 const bottomNavItems = [
   { label: 'Home', href: '/admin', icon: LayoutDashboard },
+  { label: 'Verify', href: '/admin/verification', icon: ShieldCheck },
   { label: 'Workers', href: '/admin/workers', icon: Users },
-  { label: 'Jobs', href: '/admin/jobs', icon: Briefcase },
   { label: 'Alerts', href: '/admin/sos-alerts', icon: AlertTriangle },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
 ];

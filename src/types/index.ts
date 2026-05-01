@@ -38,6 +38,8 @@ export interface Worker {
   completed_jobs: number;
   hourly_rate: number;
   availability: boolean;
+  latitude: number | null;
+  longitude: number | null;
   created_at: string;
   updated_at: string;
   profile?: Profile;

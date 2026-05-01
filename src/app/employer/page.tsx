@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { supabase } from '@/lib/supabase';
 import { formatCurrency, timeAgo, getStatusColor } from '@/lib/utils';
 import { StatCard } from '@/components/shared/StatCard';
-import { Briefcase, DollarSign, Star, Zap, ArrowRight, Clock, MessageCircle, PlusCircle, Search } from 'lucide-react';
+import { Briefcase, DollarSign, Star, Zap, ArrowRight, Clock, MessageCircle, PlusCircle, Search, UserPlus, X } from 'lucide-react';
 import Link from 'next/link';
 import type { Job, Bid, Worker } from '@/types';
 
@@ -117,6 +117,33 @@ export default function EmployerDashboard() {
           </p>
         </div>
       </div>
+
+      {/* Complete Profile Banner */}
+      {!employerProfile?.company_name && (
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-500/15 via-blue-500/10 to-cyan-500/10 border border-blue-500/20 p-5 animate-fade-in">
+          <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-blue-500/10 blur-xl" />
+          <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="p-3 rounded-xl bg-blue-500/20 shrink-0">
+              <UserPlus className="w-6 h-6 text-blue-400" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-bold text-white">
+                Complete Your Employer Profile
+              </h3>
+              <p className="text-xs text-white/50 mt-0.5">
+                Add your business details to unlock full hiring features and build trust with workers.
+              </p>
+            </div>
+            <Link
+              href="/employer/setup"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-semibold hover:shadow-lg hover:shadow-blue-500/25 hover:-translate-y-0.5 transition-all shrink-0"
+            >
+              Set Up Now
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

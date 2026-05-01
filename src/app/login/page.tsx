@@ -46,15 +46,31 @@ function LoginForm() {
       }
 
       // LOGIN SUCCESS - redirect IMMEDIATELY
-      // Small delay just to ensure cookies are set
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Small delay to ensure session is stored
+      await new Promise(resolve => setTimeout(resolve, 400));
 
-      // Full page redirect - force redirect to /worker since user is coming from there
-      // or redirect to the stored path
+      // Check user role and redirect to correct dashboard
       if (redirect) {
         window.location.href = redirect;
       } else {
-        window.location.href = '/';
+        // Fetch profile to determine role-based redirect
+        try {
+          const { supabase: sb } = await import('@/lib/supabase');
+          const userId = useAuthStore.getState().user?.id;
+          if (!userId) { window.location.href = '/'; return; }
+          const { data: prof } = await sb
+            .from('profiles')
+            .select('role')
+            .eq('id', userId)
+            .single();
+          const role = prof?.role;
+          if (role === 'worker') window.location.href = '/worker';
+          else if (role === 'employer') window.location.href = '/employer';
+          else if (role === 'admin') window.location.href = '/admin';
+          else window.location.href = '/';
+        } catch {
+          window.location.href = '/';
+        }
       }
     } catch {
       setError('Login mein masla aaya. Dobara try karein.');
