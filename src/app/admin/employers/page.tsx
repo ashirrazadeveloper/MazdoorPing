@@ -7,13 +7,11 @@ import {
   Search, Eye, Building2, ChevronLeft, ChevronRight,
   Star, MapPin, Phone, Mail, Briefcase, Ban, CheckCircle2,
 } from 'lucide-react';
-import type { Employer } from '@/types';
+import type { Employer, Profile } from '@/types';
 
 const ITEMS_PER_PAGE = 10;
 
-interface EmployerWithProfile extends Employer {
-  profile: { id: string; email: string; full_name: string; phone: string; avatar_url: string | null; role: string; created_at: string; updated_at: string };
-}
+type EmployerWithProfile = Employer & { profile: Profile };
 
 export default function EmployersPage() {
   const [employers, setEmployers] = useState<EmployerWithProfile[]>([]);
