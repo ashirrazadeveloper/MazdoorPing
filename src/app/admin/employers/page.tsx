@@ -12,7 +12,7 @@ import type { Employer } from '@/types';
 const ITEMS_PER_PAGE = 10;
 
 interface EmployerWithProfile extends Employer {
-  profile: { id: string; email: string; full_name: string; phone: string; avatar_url: string | null };
+  profile: { id: string; email: string; full_name: string; phone: string; avatar_url: string | null; role: string; created_at: string; updated_at: string };
 }
 
 export default function EmployersPage() {
