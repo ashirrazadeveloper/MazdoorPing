@@ -20,10 +20,10 @@ const STATUS_FILTERS: { label: string; value: WorkerStatus | 'all' }[] = [
 
 const ITEMS_PER_PAGE = 10;
 
-interface WorkerWithProfile extends Worker {
+type WorkerWithProfile = Worker & {
   profile: { id: string; email: string; full_name: string; phone: string; avatar_url: string | null };
   skills: (WorkerSkill & { category: { id: string; name: string } })[];
-}
+};
 
 export default function WorkersPage() {
   const { user } = useAuthStore();

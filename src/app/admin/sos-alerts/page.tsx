@@ -16,12 +16,12 @@ const STATUS_FILTERS: { label: string; value: SOSStatus | 'all' }[] = [
   { label: 'Dismissed', value: 'dismissed' },
 ];
 
-interface SOSAlertWithWorker extends SOSAlert {
+type SOSAlertWithWorker = SOSAlert & {
   worker: {
     id: string;
     profile: { id: string; full_name: string; phone: string; email: string };
   };
-}
+};
 
 export default function SOSAlertsPage() {
   const [alerts, setAlerts] = useState<SOSAlertWithWorker[]>([]);

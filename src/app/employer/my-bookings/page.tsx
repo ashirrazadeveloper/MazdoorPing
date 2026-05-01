@@ -329,25 +329,25 @@ export default function MyBookingsPage() {
               )}
 
               {/* Accepted Worker */}
-              {activeTab === 'active' && job.bids?.length > 0 && (
+              {activeTab === 'active' && (job.bids?.length ?? 0) > 0 && (
                 <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/30 to-emerald-600/10 flex items-center justify-center text-emerald-400 font-bold text-sm">
-                        {job.bids[0]?.worker?.profile?.full_name
-                          ? getInitials(job.bids[0].worker.profile.full_name)
+                        {job.bids?.[0]?.worker?.profile?.full_name
+                          ? getInitials(job.bids![0].worker.profile.full_name)
                           : 'W'}
                       </div>
                       <div>
                         <p className="text-sm font-medium text-white">
-                          {job.bids[0]?.worker?.profile?.full_name || 'Worker'}
+                          {job.bids?.[0]?.worker?.profile?.full_name || 'Worker'}
                         </p>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-emerald-400 font-medium">
-                            {formatCurrency(job.bids[0]?.amount || 0)}
+                            {formatCurrency(job.bids?.[0]?.amount || 0)}
                           </span>
                           <span className="text-xs text-white/30">•</span>
-                          <span className="text-xs text-white/40">{job.bids[0]?.estimated_days} days</span>
+                          <span className="text-xs text-white/40">{job.bids?.[0]?.estimated_days} days</span>
                         </div>
                       </div>
                     </div>

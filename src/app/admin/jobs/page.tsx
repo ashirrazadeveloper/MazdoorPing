@@ -19,10 +19,10 @@ const STATUS_FILTERS: { label: string; value: JobStatus | 'all' }[] = [
 
 const ITEMS_PER_PAGE = 10;
 
-interface JobWithDetails extends Job {
+type JobWithDetails = Job & {
   employer: { id: string; company_name: string; profile: { full_name: string } };
   category: Category;
-}
+};
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<JobWithDetails[]>([]);

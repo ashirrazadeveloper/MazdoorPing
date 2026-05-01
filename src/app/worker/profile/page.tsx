@@ -289,7 +289,7 @@ export default function ProfilePage() {
                 )}
               </h2>
               <span className={`badge ${statusBadgeClass}`}>
-                {workerProfile?.status?.charAt(0).toUpperCase() + workerProfile?.status?.slice(1)}
+                {(workerProfile?.status ?? '').charAt(0).toUpperCase() + (workerProfile?.status ?? '').slice(1)}
               </span>
             </div>
 

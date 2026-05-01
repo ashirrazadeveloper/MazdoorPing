@@ -23,6 +23,10 @@ export default function EmployerDashboard() {
 
   useEffect(() => {
     if (!employerProfile?.id) return;
+    const epId = employerProfile.id;
+    const epTotalJobs = employerProfile.total_posted_jobs;
+    const epTotalSpent = employerProfile.total_spent;
+    const epRating = employerProfile.rating;
 
     async function fetchData() {
       try {
@@ -30,13 +34,13 @@ export default function EmployerDashboard() {
           supabase
             .from('jobs')
             .select('*, category:categories(*)')
-            .eq('employer_id', employerProfile.id)
+            .eq('employer_id', epId)
             .order('created_at', { ascending: false })
             .limit(5),
           supabase
             .from('bids')
             .select('*, worker:workers(*, profile:profiles(*))')
-            .eq('job.employer_id', employerProfile.id)
+            .eq('job.employer_id', epId)
             .eq('status', 'pending')
             .order('created_at', { ascending: false })
             .limit(5),
@@ -48,10 +52,10 @@ export default function EmployerDashboard() {
           const activeJobs = jobs.filter((j) => j.status === 'open' || j.status === 'in_progress').length;
           setStats((prev) => ({
             ...prev,
-            totalJobs: employerProfile.total_posted_jobs || jobs.length,
+            totalJobs: epTotalJobs || jobs.length,
             activeJobs,
-            totalSpent: employerProfile.total_spent || 0,
-            rating: employerProfile.rating || 0,
+            totalSpent: epTotalSpent || 0,
+            rating: epRating || 0,
           }));
         }
 

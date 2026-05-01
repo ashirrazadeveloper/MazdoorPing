@@ -48,14 +48,14 @@ const TRANSACTION_STATUS_FILTERS = [
 
 const ITEMS_PER_PAGE = 8;
 
-interface WithdrawalWithWorker extends Withdrawal {
+type WithdrawalWithWorker = Withdrawal & {
   worker: { id: string; profile: { id: string; full_name: string; email: string } };
-}
+};
 
-interface TransactionWithProfiles extends Transaction {
+type TransactionWithProfiles = Transaction & {
   from_profile: { id: string; full_name: string } | null;
   to_profile: { id: string; full_name: string } | null;
-}
+};
 
 export default function FinancialsPage() {
   const { user } = useAuthStore();
@@ -273,7 +273,7 @@ export default function FinancialsPage() {
                   color: '#fff',
                   fontSize: '13px',
                 }}
-                formatter={(value: number) => [formatCurrency(value)]}
+                formatter={(value) => [formatCurrency(Number(value))] as unknown as [string, string]}
               />
               <Legend
                 wrapperStyle={{ color: 'rgba(255,255,255,0.5)', fontSize: '12px' }}

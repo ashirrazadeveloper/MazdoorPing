@@ -23,6 +23,10 @@ export default function WorkerDashboard() {
 
   useEffect(() => {
     if (!workerProfile?.id) return;
+    const wpId = workerProfile.id;
+    const wpUserId = workerProfile.user_id;
+    const wpRating = workerProfile.rating;
+    const wpCompletedJobs = workerProfile.completed_jobs;
 
     async function fetchData() {
       try {
@@ -36,13 +40,13 @@ export default function WorkerDashboard() {
           supabase
             .from('bids')
             .select('*, job:jobs(*, category:categories(*))')
-            .eq('worker_id', workerProfile.id)
+            .eq('worker_id', wpId)
             .order('created_at', { ascending: false })
             .limit(5),
           supabase
             .from('transactions')
             .select('amount, status')
-            .eq('to_user_id', workerProfile.user_id)
+            .eq('to_user_id', wpUserId)
             .eq('type', 'credit')
             .eq('status', 'completed'),
         ]);
@@ -57,8 +61,8 @@ export default function WorkerDashboard() {
         setStats({
           activeJobs,
           totalEarnings,
-          rating: workerProfile.rating || 0,
-          profileViews: workerProfile.completed_jobs || 0,
+          rating: wpRating || 0,
+          profileViews: wpCompletedJobs || 0,
         });
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
@@ -140,7 +144,7 @@ export default function WorkerDashboard() {
         <div className="flex items-center gap-2">
           <span className="text-sm text-white/40">Status:</span>
           <span className={`badge ${statusBadgeClass}`}>
-            {workerProfile?.status?.charAt(0).toUpperCase() + workerProfile?.status?.slice(1)}
+            {(workerProfile?.status ?? '').charAt(0).toUpperCase() + (workerProfile?.status ?? '').slice(1)}
           </span>
         </div>
       </div>

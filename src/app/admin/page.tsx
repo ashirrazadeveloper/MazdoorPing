@@ -263,7 +263,7 @@ export default function AdminDashboard() {
                   color: '#fff',
                   fontSize: '13px',
                 }}
-                formatter={(value: number) => [formatCurrency(value), 'Revenue']}
+                formatter={(value) => [formatCurrency(Number(value)), 'Revenue'] as unknown as [string, string]}
               />
               <Area
                 type="monotone"
