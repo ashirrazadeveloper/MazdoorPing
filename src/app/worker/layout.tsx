@@ -1,5 +1,6 @@
 'use client';
 
+import { AuthGuard } from '@/components/shared/AuthGuard';
 import { SectionLayout } from '@/components/layouts/SectionLayout';
 import { LayoutDashboard, Briefcase, ClipboardList, Wallet, User, Star, AlertTriangle, Bell } from 'lucide-react';
 
@@ -24,14 +25,16 @@ const bottomNavItems = [
 
 export default function WorkerLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SectionLayout
-      sidebarItems={sidebarItems}
-      bottomNavItems={bottomNavItems}
-      accentColor="emerald"
-      title="Worker"
-      meshBg="bg-mesh-worker"
-    >
-      {children}
-    </SectionLayout>
+    <AuthGuard allowedRole="worker">
+      <SectionLayout
+        sidebarItems={sidebarItems}
+        bottomNavItems={bottomNavItems}
+        accentColor="emerald"
+        title="Worker"
+        meshBg="bg-mesh-worker"
+      >
+        {children}
+      </SectionLayout>
+    </AuthGuard>
   );
 }

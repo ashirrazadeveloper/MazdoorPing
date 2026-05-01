@@ -1,5 +1,6 @@
 'use client';
 
+import { AuthGuard } from '@/components/shared/AuthGuard';
 import { SectionLayout } from '@/components/layouts/SectionLayout';
 import { LayoutDashboard, Users, Building2, Briefcase, Tag, DollarSign, AlertTriangle, Settings } from 'lucide-react';
 
@@ -24,14 +25,16 @@ const bottomNavItems = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <SectionLayout
-      sidebarItems={sidebarItems}
-      bottomNavItems={bottomNavItems}
-      accentColor="orange"
-      title="Admin"
-      meshBg="bg-mesh-admin"
-    >
-      {children}
-    </SectionLayout>
+    <AuthGuard allowedRole="admin">
+      <SectionLayout
+        sidebarItems={sidebarItems}
+        bottomNavItems={bottomNavItems}
+        accentColor="orange"
+        title="Admin"
+        meshBg="bg-mesh-admin"
+      >
+        {children}
+      </SectionLayout>
+    </AuthGuard>
   );
 }
