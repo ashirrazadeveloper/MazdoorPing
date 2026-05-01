@@ -166,9 +166,10 @@ export default function SettingsPage() {
       showToast(`${group.title} settings saved`, 'success');
       setOriginalMap({ ...settingsMap });
       setEditingGroup(null);
-    } catch (err) {
-      console.error('Failed to save settings:', err);
-      showToast('Failed to save settings', 'error');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Failed to save settings:', msg);
+      showToast(`Failed to save: ${msg.slice(0, 80)}`, 'error');
     } finally {
       setSavingGroup(null);
     }

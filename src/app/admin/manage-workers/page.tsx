@@ -262,9 +262,10 @@ export default function ManageWorkersPage() {
       setShowDetail(false);
       setSelectedWorker(null);
       setRefreshKey((k) => k + 1);
-    } catch (err) {
-      console.error(`Failed to ${newStatus} worker:`, err);
-      showToast(`Failed to ${newStatus} worker`, 'error');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      console.error(`Failed to ${newStatus} worker:`, msg);
+      showToast(`Failed to ${newStatus}: ${msg.slice(0, 60)}`, 'error');
     } finally {
       setActionLoading(false);
     }

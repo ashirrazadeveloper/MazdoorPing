@@ -18,11 +18,10 @@ function isSupabaseConfigured(): boolean {
 }
 
 export function AuthInitializer({ children }: { children: React.ReactNode }) {
-  const initialize = useAuthStore((s) => s.initialize);
-  const initialized = useAuthStore((s) => s.initialized);
   const initCalledRef = useRef(false);
 
   useEffect(() => {
+    // Prevent double initialization in StrictMode
     if (initCalledRef.current) return;
     initCalledRef.current = true;
 
@@ -36,24 +35,33 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Call initialize - it handles everything internally
-    // No artificial timeout that could cut off profile fetching
-    initialize();
+    // Initialize auth - fetch session and profile
+    useAuthStore.getState().initialize();
 
-    // Listen for auth state changes (login, logout, etc.)
+    // Listen for auth state changes
+    // CRITICAL: Only subscribe ONCE to prevent duplicate listeners on reload
+    let subscription: { unsubscribe: () => void } | null = null;
     try {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-        // Re-initialize on any auth change
-        // This handles: LOGIN, LOGOUT, TOKEN_REFRESH, USER_UPDATED
+      const { data } = supabase.auth.onAuthStateChange((event) => {
+        console.log('[Auth] State change:', event);
+        // Re-initialize on auth events
+        // TOKEN_REFRESHED: session refreshed silently
+        // SIGNED_IN: user logged in
+        // SIGNED_OUT: user logged out
         useAuthStore.getState().initialize();
       });
-      return () => {
-        subscription.unsubscribe();
-      };
-    } catch {
-      // Supabase not reachable - already initialized above
+      subscription = data.subscription;
+    } catch (err) {
+      console.warn('[Auth] Could not subscribe to auth changes:', err);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Cleanup on unmount
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
+  }, []);
 
   // ALWAYS render children immediately - never block the UI
   return <>{children}</>;
