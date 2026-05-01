@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/store/auth-store';
 import { supabase } from '@/lib/supabase';
 
@@ -20,37 +20,40 @@ function isSupabaseConfigured(): boolean {
 export function AuthInitializer({ children }: { children: React.ReactNode }) {
   const initialize = useAuthStore((s) => s.initialize);
   const initialized = useAuthStore((s) => s.initialized);
+  const initCalledRef = useRef(false);
 
   useEffect(() => {
-    if (!initialized) {
-      // Add timeout - if init takes more than 4 seconds, force finish
-      const timeout = setTimeout(() => {
-        useAuthStore.setState({ initialized: true, isLoading: false });
-      }, 4000);
+    if (initCalledRef.current) return;
+    initCalledRef.current = true;
 
-      initialize().finally(() => {
-        clearTimeout(timeout);
+    if (!isSupabaseConfigured()) {
+      useAuthStore.setState({
+        initialized: true,
+        isLoading: false,
+        supabaseReady: false,
+        connectionError: 'Supabase configured nahi hai. Environment variables set karein.',
       });
-
-      // Set up auth state change listener only if Supabase is configured
-      if (isSupabaseConfigured()) {
-        try {
-          const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-            initialize();
-          });
-          return () => {
-            clearTimeout(timeout);
-            subscription.unsubscribe();
-          };
-        } catch {
-          // If Supabase is not reachable, just clean up
-          return () => clearTimeout(timeout);
-        }
-      }
-
-      return () => clearTimeout(timeout);
+      return;
     }
-  }, [initialize, initialized]);
+
+    // Call initialize - it handles everything internally
+    // No artificial timeout that could cut off profile fetching
+    initialize();
+
+    // Listen for auth state changes (login, logout, etc.)
+    try {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        // Re-initialize on any auth change
+        // This handles: LOGIN, LOGOUT, TOKEN_REFRESH, USER_UPDATED
+        useAuthStore.getState().initialize();
+      });
+      return () => {
+        subscription.unsubscribe();
+      };
+    } catch {
+      // Supabase not reachable - already initialized above
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ALWAYS render children immediately - never block the UI
   return <>{children}</>;
