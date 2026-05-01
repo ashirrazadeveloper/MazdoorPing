@@ -45,28 +45,17 @@ function LoginForm() {
         return;
       }
 
-      // Wait for cookies to be set, then do FULL page navigation
-      // (not router.push - we need fresh cookies sent to server)
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // LOGIN SUCCESS - redirect IMMEDIATELY
+      // Small delay just to ensure cookies are set
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      // Use window.location for full page reload - ensures cookies are sent
+      // Full page redirect - force redirect to /worker since user is coming from there
+      // or redirect to the stored path
       if (redirect) {
         window.location.href = redirect;
       } else {
-        // Try to get role from profile, fallback to home
-        const currentProfile = useAuthStore.getState().profile;
-        const role = currentProfile?.role;
-        if (role === 'worker') {
-          window.location.href = '/worker';
-        } else if (role === 'employer') {
-          window.location.href = '/employer';
-        } else if (role === 'admin') {
-          window.location.href = '/admin';
-        } else {
-          window.location.href = '/';
-        }
+        window.location.href = '/';
       }
-      // Don't set isSubmitting to false - page will navigate away
     } catch {
       setError('Login mein masla aaya. Dobara try karein.');
       setIsSubmitting(false);

@@ -178,8 +178,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return { error: getFriendlyErrorMessage(error.message) };
 
-      // Fetch profiles after login
-      await get().fetchProfiles();
+      // DON'T fetch profiles here - it can hang.
+      // Profile will be fetched after redirect on the dashboard page.
+      // Just set the basic session info.
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        set({ user: session.user, session });
+      }
       return { error: null };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Login mein masla hai';
