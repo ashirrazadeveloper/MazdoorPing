@@ -17,11 +17,11 @@ function isSupabaseConfigured(): boolean {
 }
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+  const supabaseResponse = NextResponse.next({ request });
   const { pathname } = request.nextUrl;
   const isPublicPath = publicPaths.some((p) => pathname === p || pathname.startsWith('/api/'));
 
-  // If Supabase is not configured, allow all pages without auth check
+  // If Supabase is not configured, allow ALL pages
   if (!isSupabaseConfigured()) {
     return supabaseResponse;
   }
@@ -39,7 +39,6 @@ export async function middleware(request: NextRequest) {
             cookiesToSet.forEach(({ name, value }) =>
               request.cookies.set(name, value)
             );
-            supabaseResponse = NextResponse.next({ request });
             cookiesToSet.forEach(({ name, value, options }) =>
               supabaseResponse.cookies.set(name, value, options)
             );
@@ -48,46 +47,50 @@ export async function middleware(request: NextRequest) {
       }
     );
 
-    const { data: { user } } = await supabase.auth.getUser();
+    // Use getSession (reads from cookies, NO network call) with timeout
+    const sessionResult = await Promise.race<any>([
+      supabase.auth.getSession(),
+      new Promise<any>((resolve) => setTimeout(() => resolve({ data: { session: null } }), 3000))
+    ]);
+    const session = sessionResult?.data?.session || null;
 
-    if (!user && !isPublicPath) {
+    if (!session?.user && !isPublicPath) {
       const url = request.nextUrl.clone();
       url.pathname = '/login';
       url.searchParams.set('redirect', pathname);
       return NextResponse.redirect(url);
     }
 
-    if (user) {
+    if (session?.user) {
       try {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
+        const profileResult = await Promise.race<any>([
+          supabase.from('profiles').select('role').eq('id', session.user.id).single(),
+          new Promise<any>((resolve) => setTimeout(() => resolve({ data: null }), 3000))
+        ]);
 
-        const role = profile?.role;
+        const role = profileResult?.data?.role;
 
-        if (pathname.startsWith('/worker') && role !== 'worker') {
-          return NextResponse.redirect(new URL(role === 'employer' ? '/employer' : role === 'admin' ? '/admin' : '/', request.url));
-        }
-        if (pathname.startsWith('/employer') && role !== 'employer') {
-          return NextResponse.redirect(new URL(role === 'worker' ? '/worker' : role === 'admin' ? '/admin' : '/', request.url));
-        }
-        if (pathname.startsWith('/admin') && role !== 'admin') {
-          return NextResponse.redirect(new URL(role === 'worker' ? '/worker' : role === 'employer' ? '/employer' : '/', request.url));
-        }
-
-        if ((pathname === '/login' || pathname === '/register') && role) {
-          const redirectPath = role === 'worker' ? '/worker' : role === 'employer' ? '/employer' : role === 'admin' ? '/admin' : '/';
-          return NextResponse.redirect(new URL(redirectPath, request.url));
+        if (role) {
+          if (pathname.startsWith('/worker') && role !== 'worker') {
+            return NextResponse.redirect(new URL(role === 'employer' ? '/employer' : role === 'admin' ? '/admin' : '/', request.url));
+          }
+          if (pathname.startsWith('/employer') && role !== 'employer') {
+            return NextResponse.redirect(new URL(role === 'worker' ? '/worker' : role === 'admin' ? '/admin' : '/', request.url));
+          }
+          if (pathname.startsWith('/admin') && role !== 'admin') {
+            return NextResponse.redirect(new URL(role === 'worker' ? '/worker' : role === 'employer' ? '/employer' : '/', request.url));
+          }
+          if ((pathname === '/login' || pathname === '/register')) {
+            const redirectPath = role === 'worker' ? '/worker' : role === 'employer' ? '/employer' : role === 'admin' ? '/admin' : '/';
+            return NextResponse.redirect(new URL(redirectPath, request.url));
+          }
         }
       } catch {
-        // If profile fetch fails, let the user through
+        // Profile fetch failed, let user through
       }
     }
   } catch {
-    // If Supabase connection fails, allow the request through
-    // so the page can load and show its own error UI
+    // Any error - just let the request pass through
   }
 
   return supabaseResponse;
