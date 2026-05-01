@@ -36,7 +36,7 @@ interface AuthState {
 
 function getFriendlyErrorMessage(errorMsg: string): string {
   const lower = errorMsg.toLowerCase();
-  
+
   if (lower.includes('invalid login credentials') || lower.includes('invalid email or password')) {
     return 'Email ya password galat hai. Dobara check karein.';
   }
@@ -44,7 +44,7 @@ function getFriendlyErrorMessage(errorMsg: string): string {
     return 'Email confirm nahi hua. Pehle apne email mein aayi link par click karein.';
   }
   if (lower.includes('user already registered') || lower.includes('already registered')) {
-    return 'Ye email pehle se registered hai. Agar account hai toh login karein ya different email use karein.';
+    return 'Ye email pehle se registered hai. Login karein ya different email use karein.';
   }
   if (lower.includes('rate limit') || lower.includes('too many requests')) {
     return 'Bohat zyada try kiya. Thori dair baad dobara try karein.';
@@ -53,10 +53,10 @@ function getFriendlyErrorMessage(errorMsg: string): string {
     return 'Password kam az kam 8 characters ka hona chahiye.';
   }
   if (lower.includes('network') || lower.includes('fetch') || lower.includes('failed to connect')) {
-    return 'Internet connection mein masla hai ya server available nahi hai. Dobara try karein.';
+    return 'Internet connection mein masla hai. Dobara try karein.';
   }
-  if (lower.includes('row-level security') || lower.includes('rls')) {
-    return 'Database permission error. Admin se contact karein.';
+  if (lower.includes('row-level security') || lower.includes('rls') || lower.includes('406') || lower.includes('not acceptable')) {
+    return 'Database permission error. SQL Editor mein RLS policies add karein.';
   }
   if (lower.includes('duplicate key') || lower.includes('unique constraint')) {
     return 'Ye record pehle se mojood hai.';
@@ -66,6 +66,39 @@ function getFriendlyErrorMessage(errorMsg: string): string {
   }
 
   return errorMsg;
+}
+
+// Helper to safely fetch worker profile without complex joins
+async function fetchWorkerProfile(userId: string): Promise<Worker | null> {
+  try {
+    // First try simple query (no joins) - most likely to work even without RLS on related tables
+    const { data: worker, error } = await supabase
+      .from('workers')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !worker) return null;
+    return worker as Worker;
+  } catch {
+    return null;
+  }
+}
+
+// Helper to safely fetch employer profile
+async function fetchEmployerProfile(userId: string): Promise<Employer | null> {
+  try {
+    const { data: employer, error } = await supabase
+      .from('employers')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error || !employer) return null;
+    return employer as Employer;
+  } catch {
+    return null;
+  }
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -80,7 +113,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   connectionError: null,
 
   initialize: async () => {
-    // If Supabase is not configured, mark as initialized immediately
     if (!isSupabaseConfigured()) {
       set({
         initialized: true,
@@ -93,7 +125,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+
       if (sessionError) {
         set({
           initialized: true,
@@ -104,43 +136,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
 
       if (session?.user) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+        let profile: Profile | null = null;
 
-        if (profileError) {
-          set({
-            user: session.user,
-            session,
-            profile: null,
-            initialized: true,
-            isLoading: false,
-          });
-          return;
+        try {
+          const { data: profData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          profile = profData || null;
+        } catch {
+          profile = null;
         }
 
-        set({ user: session.user, session, profile: profile || null });
+        set({ user: session.user, session, profile });
 
         if (profile?.role === 'worker') {
-          const { data: worker } = await supabase
-            .from('workers')
-            .select('*, skills:worker_skills(*, category:categories(*))')
-            .eq('user_id', session.user.id)
-            .single();
-          set({ workerProfile: worker || null });
+          const worker = await fetchWorkerProfile(session.user.id);
+          set({ workerProfile: worker });
         } else if (profile?.role === 'employer') {
-          const { data: employer } = await supabase
-            .from('employers')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .single();
-          set({ employerProfile: employer || null });
+          const employer = await fetchEmployerProfile(session.user.id);
+          set({ employerProfile: employer });
         }
       }
       set({ initialized: true, isLoading: false, connectionError: null });
-    } catch (err) {
+    } catch {
       set({
         initialized: true,
         isLoading: false,
@@ -157,6 +177,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return { error: getFriendlyErrorMessage(error.message) };
+
+      // Fetch profiles after login
       await get().fetchProfiles();
       return { error: null };
     } catch (err: unknown) {
@@ -180,23 +202,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (error) return { error: getFriendlyErrorMessage(error.message), needsConfirmation: false };
 
       if (data.user) {
-        // Try to insert profile
-        const { error: profileError } = await supabase.from('profiles').insert({
-          id: data.user.id,
-          email,
-          full_name: fullName,
-          phone,
-          role,
-        });
-
-        if (profileError) {
-          // If profile already exists, that's okay - continue
-          if (!profileError.message.includes('duplicate')) {
-            console.error('Profile insert error:', profileError);
-            // Don't fail the signup, the auth was successful
-          }
+        // Try to insert profile - wrap in try-catch to not fail signup
+        try {
+          await supabase.from('profiles').insert({
+            id: data.user.id,
+            email,
+            full_name: fullName,
+            phone,
+            role,
+          });
+        } catch {
+          // Ignore - auth was successful
         }
 
+        // Try to insert worker/employer record
         if (role === 'worker') {
           try {
             await supabase.from('workers').insert({
@@ -204,21 +223,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               profile_id: data.user.id,
               status: 'pending',
             });
-          } catch { /* ignore worker insert error */ }
+          } catch { /* ignore */ }
         } else if (role === 'employer') {
           try {
             await supabase.from('employers').insert({
               user_id: data.user.id,
               profile_id: data.user.id,
             });
-          } catch { /* ignore employer insert error */ }
+          } catch { /* ignore */ }
         }
 
-        await get().fetchProfiles();
-
         // Check if email confirmation is needed
-        const needsConfirmation = !data.session && data.user?.identities?.length === 0 === false;
-        return { error: null, needsConfirmation: !data.session };
+        const needsConfirmation = !data.session;
+        return { error: null, needsConfirmation };
       }
 
       return { error: null, needsConfirmation: false };
@@ -229,7 +246,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signOut: async () => {
-    await supabase.auth.signOut().catch(() => {});
+    try {
+      await supabase.auth.signOut();
+    } catch { /* ignore */ }
     set({
       user: null,
       session: null,
@@ -246,31 +265,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return;
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
+      let profile: Profile | null = null;
+      try {
+        const { data: profData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        profile = profData || null;
+      } catch {
+        profile = null;
+      }
 
-      set({ user: session.user, session, profile: profile || null });
+      set({ user: session.user, session, profile });
 
       if (profile?.role === 'worker') {
-        const { data: worker } = await supabase
-          .from('workers')
-          .select('*, skills:worker_skills(*, category:categories(*))')
-          .eq('user_id', session.user.id)
-          .single();
-        set({ workerProfile: worker || null });
+        const worker = await fetchWorkerProfile(session.user.id);
+        set({ workerProfile: worker });
       } else if (profile?.role === 'employer') {
-        const { data: employer } = await supabase
-          .from('employers')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
-        set({ employerProfile: employer || null });
+        const employer = await fetchEmployerProfile(session.user.id);
+        set({ employerProfile: employer });
       }
     } catch {
-      // Silent fail for profile fetch
+      // Silent fail
     }
   },
 }));
