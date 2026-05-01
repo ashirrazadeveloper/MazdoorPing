@@ -45,6 +45,8 @@ function RegisterForm() {
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [signupSuccess, setSignupSuccess] = useState(false);
+  const [signupEmail, setSignupEmail] = useState('');
 
   // Redirect if already logged in with a role
   useEffect(() => {
@@ -104,17 +106,71 @@ function RegisterForm() {
       return;
     }
 
-    // After successful signup, redirect
-    if (redirect) {
-      router.push(redirect);
-    } else if (role === 'worker') {
-      router.push('/worker');
-    } else if (role === 'employer') {
-      router.push('/employer');
-    } else {
-      router.push('/');
-    }
+    // After successful signup, show confirmation
+    setSignupEmail(email);
+    setSignupSuccess(true);
   };
+
+  if (signupSuccess) {
+    return (
+      <div className="relative flex min-h-screen items-center justify-center px-4 py-12 sm:px-6">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute left-1/4 top-1/3 h-[500px] w-[500px] rounded-full bg-emerald-500/5 blur-[120px]" />
+          <div className="absolute bottom-1/3 right-1/4 h-[500px] w-[500px] rounded-full bg-blue-500/5 blur-[120px]" />
+        </div>
+        <div className="relative w-full max-w-md animate-fade-in">
+ <div className="glass-card p-8 sm:p-10 text-center">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/20">
+              <svg className="h-8 w-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Check Your Email</h2>
+            <p className="text-white/50 text-sm mb-6">
+              We have sent a confirmation link to
+            </p>
+            <div className="glass-input px-4 py-3 rounded-xl mb-8">
+              <p className="text-emerald-400 font-medium text-sm truncate">{signupEmail}</p>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                <svg className="h-5 w-5 text-blue-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                </svg>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-blue-400">Important</p>
+                  <p className="text-xs text-white/40 mt-0.5">Click the confirmation link in your email to activate your account. Check your spam folder if you don't see it.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                <svg className="h-5 w-5 text-amber-400 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <div className="text-left">
+                  <p className="text-sm font-medium text-amber-400">Worker Verification</p>
+                  <p className="text-xs text-white/40 mt-0.5">If you signed up as a Worker, your profile will be reviewed by our team before activation.</p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-8 pt-6 border-t border-white/5 space-y-3">
+              <button
+                onClick={() => router.push('/login')}
+                className="glass-button w-full py-3 text-sm font-semibold"
+              >
+                Go to Login
+              </button>
+              <button
+                onClick={() => { setSignupSuccess(false); setSignupEmail(''); }}
+                className="w-full py-2.5 text-sm font-medium text-white/50 hover:text-white/70 transition-colors"
+              >
+                Sign up with a different email
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex min-h-screen items-center justify-center px-4 py-12 sm:px-6">
