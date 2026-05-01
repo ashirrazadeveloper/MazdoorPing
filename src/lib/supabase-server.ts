@@ -1,11 +1,12 @@
-import { createServerClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
 export const createSupabaseServerClient = () => {
   const cookieStore = cookies();
+
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key',
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder',
     {
       cookies: {
         getAll() {
@@ -17,8 +18,7 @@ export const createSupabaseServerClient = () => {
               cookieStore.set(name, value, options)
             );
           } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing sessions.
+            // Server Component - ignore
           }
         },
       },
