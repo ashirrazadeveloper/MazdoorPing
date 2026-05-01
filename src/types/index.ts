@@ -59,6 +59,7 @@ export interface Employer {
   total_spent: number;
   rating: number;
   total_reviews: number;
+  status: 'active' | 'suspended';
   created_at: string;
   updated_at: string;
   profile?: Profile;
