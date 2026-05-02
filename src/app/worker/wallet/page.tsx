@@ -38,7 +38,12 @@ export default function WalletPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWithdraw, setShowWithdraw] = useState(false);
+  const [showDeposit, setShowDeposit] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
+  const [depositing, setDepositing] = useState(false);
+  const [depositAmount, setDepositAmount] = useState('');
+  const [depositError, setDepositError] = useState('');
+  const [depositSuccess, setDepositSuccess] = useState('');
   const [withdrawForm, setWithdrawForm] = useState({
     amount: '',
     bankName: '',
@@ -280,6 +285,70 @@ export default function WalletPage() {
     }
   };
 
+  const handleDeposit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setDepositError('');
+    setDepositSuccess('');
+
+    const amount = parseFloat(depositAmount);
+    if (!amount || amount < 500) {
+      setDepositError(language === 'ur' ? 'کم از کم PKR 500 جمع کریں' : 'Please deposit at least PKR 500.');
+      return;
+    }
+    if (amount > 100000) {
+      setDepositError(language === 'ur' ? 'ایک وقت میں PKR 100,000 سے زیادہ نہیں' : 'Maximum deposit is PKR 100,000 at once.');
+      return;
+    }
+
+    setDepositing(true);
+    try {
+      // Create a deposit transaction (credit)
+      const { error } = await supabase.from('transactions').insert({
+        from_user_id: workerProfile?.user_id,
+        to_user_id: workerProfile?.user_id,
+        amount,
+        type: 'credit',
+        status: 'completed',
+        description: 'Wallet Deposit - Platform Security',
+      });
+
+      if (error) {
+        setDepositError(error.message);
+        return;
+      }
+
+      setDepositSuccess(t('wallet.depositSuccess'));
+      setDepositAmount('');
+      setShowDeposit(false);
+
+      // Refresh wallet data
+      const { data: transactionsData } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('to_user_id', workerProfile?.user_id)
+        .order('created_at', { ascending: false });
+
+      const txns = (transactionsData || []) as Transaction[];
+      setTransactions(txns);
+
+      const completedCredits = txns.filter((tr) => tr.type === 'credit' && tr.status === 'completed');
+      const debits = txns.filter((tr) => tr.type === 'debit' && tr.status === 'completed');
+      const totalEarned = completedCredits.reduce((sum, tr) => sum + tr.amount, 0);
+      const totalDebited = debits.reduce((sum, tr) => sum + tr.amount, 0);
+
+      setWalletData({
+        balance: Math.max(0, totalEarned - totalDebited),
+        totalEarned,
+        pending: txns.filter((tr) => tr.type === 'credit' && tr.status === 'pending').reduce((s, tr) => s + tr.amount, 0),
+        totalCommission: walletData.totalCommission,
+      });
+    } catch {
+      setDepositError(t('common.failed'));
+    } finally {
+      setDepositing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6 animate-fade-in">
@@ -328,24 +397,36 @@ export default function WalletPage() {
             {formatCurrency(walletData.balance)}
           </p>
           <p className="text-sm text-white/30">MazdoorPing Worker Account</p>
-          <button
-            onClick={() => {
-              setShowWithdraw(true);
-              setWithdrawError('');
-              setWithdrawSuccess('');
-              // Pre-fill from saved bank details
-              setWithdrawForm({
-                amount: '',
-                bankName: bankForm.bankName || workerProfile?.bank_name || '',
-                accountNumber: bankForm.accountNumber || workerProfile?.account_number || '',
-                accountTitle: bankForm.accountTitle || workerProfile?.account_title || '',
-              });
-            }}
-            className="mt-6 flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all text-sm font-semibold min-h-[44px]"
-          >
-            <ArrowDownToLine className="w-4 h-4" />
-            {t('worker.withdrawFunds')}
-          </button>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              onClick={() => {
+                setShowDeposit(true);
+                setDepositError('');
+                setDepositSuccess('');
+              }}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all text-sm font-semibold min-h-[44px]"
+            >
+              <TrendingUp className="w-4 h-4" />
+              {t('wallet.addFunds')}
+            </button>
+            <button
+              onClick={() => {
+                setShowWithdraw(true);
+                setWithdrawError('');
+                setWithdrawSuccess('');
+                setWithdrawForm({
+                  amount: '',
+                  bankName: bankForm.bankName || workerProfile?.bank_name || '',
+                  accountNumber: bankForm.accountNumber || workerProfile?.account_number || '',
+                  accountTitle: bankForm.accountTitle || workerProfile?.account_title || '',
+                });
+              }}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 text-white/60 hover:bg-white/10 border border-white/10 transition-all text-sm font-semibold min-h-[44px]"
+            >
+              <ArrowDownToLine className="w-4 h-4" />
+              {t('worker.withdrawFunds')}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -481,6 +562,91 @@ export default function WalletPage() {
           </div>
         )}
       </div>
+
+      {/* Deposit Modal */}
+      {showDeposit && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4">
+          <div className="glass-card p-6 w-full max-w-md animate-fade-in border border-white/10 sm:my-0 max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-white">{t('wallet.depositTitle')}</h2>
+              <button
+                onClick={() => setShowDeposit(false)}
+                className="p-2.5 rounded-lg hover:bg-white/10 text-white/50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-sm text-white/50 mb-4">{t('wallet.depositSubtitle')}</p>
+
+            <form onSubmit={handleDeposit} className="space-y-4">
+              <div>
+                <label className="block text-xs text-white/40 mb-1.5 font-medium">{t('wallet.amount')}</label>
+                <div className="relative">
+                  <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                  <input
+                    type="number"
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(e.target.value)}
+                    placeholder={t('wallet.amountPlaceholder')}
+                    className="glass-input w-full pl-10 pr-4 py-3 text-sm text-white placeholder:text-white/30"
+                    min="500"
+                    max="100000"
+                    step="100"
+                  />
+                </div>
+                <p className="text-xs text-white/30 mt-1">{t('wallet.minDeposit')}</p>
+              </div>
+
+              <div className="glass-card p-3 bg-blue-500/5 border-blue-500/10">
+                <div className="flex items-start gap-2">
+                  <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-white/50">{t('wallet.depositNote')}</p>
+                </div>
+              </div>
+
+              {depositError && (
+                <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                  {depositError}
+                </p>
+              )}
+
+              {depositSuccess && (
+                <p className="text-sm text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">
+                  {depositSuccess}
+                </p>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDeposit(false)}
+                  className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 transition-all text-sm font-medium min-h-[44px]"
+                >
+                  {t('common.cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={depositing}
+                  className="flex-1 px-4 py-3 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 min-h-[44px]"
+                >
+                  {depositing ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin" />
+                      {t('common.processing')}
+                    </>
+                  ) : (
+                    <>
+                      <Banknote className="w-4 h-4" />
+                      {t('wallet.addFunds')}
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Withdrawal Modal */}
       {showWithdraw && (

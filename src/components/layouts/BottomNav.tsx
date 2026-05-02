@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useLanguageStore } from '@/store/language-store';
 import { cn } from '@/lib/utils';
 import type { LucideIcon } from 'lucide-react';
 
 interface BottomNavItem {
   label: string;
+  labelKey: string;
   href: string;
   icon: LucideIcon;
 }
@@ -18,6 +20,7 @@ interface BottomNavProps {
 
 export function BottomNav({ items, accentColor }: BottomNavProps) {
   const pathname = usePathname();
+  const { t } = useLanguageStore();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 glass-sidebar border-t border-white/5 z-50 lg:hidden">
@@ -36,7 +39,7 @@ export function BottomNav({ items, accentColor }: BottomNavProps) {
               )}
             >
               <item.icon className={cn('w-5 h-5', isActive && `text-${accentColor}-400`)} />
-              <span className="text-[10px] font-medium leading-tight">{item.label}</span>
+              <span className="text-[10px] font-medium leading-tight">{t(item.labelKey)}</span>
             </Link>
           );
         })}

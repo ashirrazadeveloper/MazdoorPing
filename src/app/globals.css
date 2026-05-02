@@ -294,13 +294,21 @@ body {
   border: none !important;
 }
 
-/* RTL Urdu font support */
-[dir="rtl"] {
+/* RTL Urdu font support - applied via body class, not dir="rtl" */
+body.urdu-font {
   font-family: 'Noto Nastaliq Urdu', 'Inter', system-ui, sans-serif;
 }
 
-[dir="rtl"] .font-mono,
-[dir="rtl"] .glass-input[placeholder] {
+body.urdu-font .font-mono {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Keep Latin font for inputs and numbers even in Urdu mode */
+body.urdu-font input,
+body.urdu-font select,
+body.urdu-font textarea,
+body.urdu-font .font-mono,
+body.urdu-font .skeleton {
   font-family: 'Inter', system-ui, sans-serif;
 }
 

@@ -5,7 +5,6 @@ import { t as translate, type Language } from '@/lib/translations';
 interface LanguageState {
   language: Language;
   setLanguage: (lang: Language) => void;
-  isRTL: boolean;
   t: (key: string) => string;
 }
 
@@ -14,9 +13,6 @@ export const useLanguageStore = create<LanguageState>()(
     (set, get) => ({
       language: 'en',
       setLanguage: (lang: Language) => set({ language: lang }),
-      get isRTL() {
-        return get().language === 'ur';
-      },
       t: (key: string) => translate(key, get().language),
     }),
     {
