@@ -14,6 +14,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import type { DashboardStats, Worker, SOSAlert } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 const workerRegistrationData = [
   { month: 'Jan', registrations: 45 },
@@ -46,6 +47,7 @@ const revenueData = [
 ];
 
 export default function AdminDashboard() {
+  const { t } = useLanguageStore();
   const [stats, setStats] = useState<DashboardStats>({
     totalWorkers: 0,
     activeWorkers: 0,

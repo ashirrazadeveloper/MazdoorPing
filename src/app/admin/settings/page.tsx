@@ -8,6 +8,7 @@ import {
   Save, Pencil, X, Check,
 } from 'lucide-react';
 import type { Settings } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 interface SettingsGroup {
   title: string;
@@ -104,6 +105,7 @@ const DEFAULT_VALUES: Record<string, string> = {
 
 export default function SettingsPage() {
   const [settingsMap, setSettingsMap] = useState<Record<string, string>>({});
+  const { t } = useLanguageStore();
   const [originalMap, setOriginalMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [savingGroup, setSavingGroup] = useState<string | null>(null);

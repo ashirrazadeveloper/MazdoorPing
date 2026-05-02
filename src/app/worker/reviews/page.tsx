@@ -7,9 +7,11 @@ import { formatDate, getInitials } from '@/lib/utils';
 import { Star, MessageSquare } from 'lucide-react';
 import Image from 'next/image';
 import type { Review } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 export default function ReviewsPage() {
   const { workerProfile } = useAuthStore();
+  const { t } = useLanguageStore();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [ratingBreakdown, setRatingBreakdown] = useState({
@@ -130,8 +132,8 @@ export default function ReviewsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-white">Reviews</h1>
-        <p className="text-white/50 mt-1">What employers are saying about your work</p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-white">{t("worker.reviewsTitle")}</h1>
+        <p className="text-white/50 mt-1">{t("worker.reviewsSubtitle")}</p>
       </div>
 
       {/* Overall Rating Card */}
@@ -178,7 +180,7 @@ export default function ReviewsPage() {
           <div className="p-4 rounded-2xl bg-white/5 mb-4">
             <MessageSquare className="w-12 h-12 text-white/20" />
           </div>
-          <h3 className="text-lg font-semibold text-white mb-2">No reviews yet</h3>
+          <h3 className="text-lg font-semibold text-white mb-2">{t('worker.noReviews')}</h3>
           <p className="text-white/40 text-sm max-w-md">
             Once you complete jobs, employers can leave reviews about your work. Keep delivering great results!
           </p>
@@ -219,7 +221,7 @@ export default function ReviewsPage() {
                   {review.comment ? (
                     <p className="text-sm text-white/60 mt-2 leading-relaxed">{review.comment}</p>
                   ) : (
-                    <p className="text-sm text-white/30 italic mt-2">No comment left</p>
+                    <p className="text-sm text-white/30 italic mt-2">{t("worker.noReviewsSub")}</p>
                   )}
                 </div>
               </div>

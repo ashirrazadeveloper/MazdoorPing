@@ -8,6 +8,7 @@ import {
   MapPin, X, Ban, Award, Clock,
 } from 'lucide-react';
 import type { Job, JobStatus, Category } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 const STATUS_FILTERS: { label: string; value: JobStatus | 'all' }[] = [
   { label: 'All', value: 'all' },
@@ -26,6 +27,7 @@ type JobWithDetails = Job & {
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<JobWithDetails[]>([]);
+  const { t } = useLanguageStore();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');

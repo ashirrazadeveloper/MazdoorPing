@@ -19,6 +19,7 @@ import {
   Star,
 } from 'lucide-react';
 import type { Category } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 interface JobFormData {
   title: string;
@@ -68,6 +69,7 @@ const provinces = [
 
 export default function PostJobPage() {
   const { employerProfile } = useAuthStore();
+  const { t } = useLanguageStore();
   const router = useRouter();
   const [formData, setFormData] = useState<JobFormData>(initialFormData);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -255,7 +257,7 @@ export default function PostJobPage() {
           </h2>
 
           <div>
-            <label className="block text-xs text-white/40 mb-1.5 font-medium">Job Title *</label>
+            <label className="block text-xs text-white/40 mb-1.5 font-medium">{t("postJob.jobTitle")} *</label>
             <input
               type="text"
               value={formData.title}
@@ -266,7 +268,7 @@ export default function PostJobPage() {
           </div>
 
           <div>
-            <label className="block text-xs text-white/40 mb-1.5 font-medium">Description *</label>
+            <label className="block text-xs text-white/40 mb-1.5 font-medium">{t("postJob.description")} *</label>
             <textarea
               value={formData.description}
               onChange={(e) => updateField('description', e.target.value)}
@@ -277,7 +279,7 @@ export default function PostJobPage() {
           </div>
 
           <div>
-            <label className="block text-xs text-white/40 mb-1.5 font-medium">Category *</label>
+            <label className="block text-xs text-white/40 mb-1.5 font-medium">{t("postJob.category")} *</label>
             <select
               value={formData.category_id}
               onChange={(e) => updateField('category_id', e.target.value)}
@@ -325,7 +327,7 @@ export default function PostJobPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-white/40 mb-1.5 font-medium">Minimum Budget (PKR) *</label>
+              <label className="block text-xs text-white/40 mb-1.5 font-medium">{t("postJob.budgetMin")} *</label>
               <input
                 type="number"
                 value={formData.budget_min}
@@ -336,7 +338,7 @@ export default function PostJobPage() {
               />
             </div>
             <div>
-              <label className="block text-xs text-white/40 mb-1.5 font-medium">Maximum Budget (PKR) *</label>
+              <label className="block text-xs text-white/40 mb-1.5 font-medium">{t("postJob.budgetMax")} *</label>
               <input
                 type="number"
                 value={formData.budget_max}
@@ -357,7 +359,7 @@ export default function PostJobPage() {
           </h2>
 
           <div>
-            <label className="block text-xs text-white/40 mb-1.5 font-medium">City *</label>
+            <label className="block text-xs text-white/40 mb-1.5 font-medium">{t("postJob.city")} *</label>
             <input
               type="text"
               value={formData.city}
@@ -368,7 +370,7 @@ export default function PostJobPage() {
           </div>
 
           <div>
-            <label className="block text-xs text-white/40 mb-1.5 font-medium">Province *</label>
+            <label className="block text-xs text-white/40 mb-1.5 font-medium">{t("postJob.province")} *</label>
             <select
               value={formData.province}
               onChange={(e) => updateField('province', e.target.value)}
@@ -448,10 +450,10 @@ export default function PostJobPage() {
                 onChange={(e) => updateField('urgency', e.target.value)}
                 className="glass-input w-full px-4 py-3 text-sm text-white appearance-none cursor-pointer"
               >
-                <option value="low" className="bg-gray-900">Low</option>
-                <option value="medium" className="bg-gray-900">Medium</option>
-                <option value="high" className="bg-gray-900">High</option>
-                <option value="urgent" className="bg-gray-900">Urgent</option>
+                <option value="low" className="bg-gray-900">{t("postJob.low")}</option>
+                <option value="medium" className="bg-gray-900">{t("postJob.medium")}</option>
+                <option value="high" className="bg-gray-900">{t("postJob.high")}</option>
+                <option value="urgent" className="bg-gray-900">{t("postJob.urgent")}</option>
               </select>
             </div>
           </div>

@@ -28,7 +28,7 @@ export function JobCard({ job, showActions, onBid, onSave }: JobCardProps) {
           </p>
         </div>
         <span className={`badge ${getStatusColor(job.status)}`}>
-          {job.status.replace('_', ' ')}
+          {t('common.' + job.status.replace('_', ''))}
         </span>
       </div>
 
@@ -58,7 +58,7 @@ export function JobCard({ job, showActions, onBid, onSave }: JobCardProps) {
           <p className={`text-sm font-bold ${getUrgencyColor(job.urgency)}`}>
             {formatCurrency(job.budget_min)} - {formatCurrency(job.budget_max)}
           </p>
-          <p className="text-xs text-white/30">{job.budget_type}</p>
+          <p className="text-xs text-white/30">{t('postJob.' + job.budget_type)}</p>
         </div>
         {showActions && (
           <div className="flex gap-2">

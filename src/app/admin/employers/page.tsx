@@ -8,6 +8,7 @@ import {
   Star, MapPin, Phone, Mail, Briefcase, Ban, CheckCircle2,
 } from 'lucide-react';
 import type { Employer, Profile } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -15,6 +16,7 @@ type EmployerWithProfile = Employer & { profile: Profile };
 
 export default function EmployersPage() {
   const [employers, setEmployers] = useState<EmployerWithProfile[]>([]);
+  const { t } = useLanguageStore();
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);

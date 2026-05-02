@@ -8,7 +8,6 @@ import { StatCard } from '@/components/shared/StatCard';
 import MapWrapper from '@/components/shared/MapWrapper';
 import {
   Briefcase,
-  DollarSign,
   Star,
   Eye,
   Clock,
@@ -21,9 +20,11 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import type { Job, Bid } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 export default function WorkerDashboard() {
   const { workerProfile, profile } = useAuthStore();
+  const { t } = useLanguageStore();
   const [recentJobs, setRecentJobs] = useState<Job[]>([]);
   const [recentBids, setRecentBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +32,7 @@ export default function WorkerDashboard() {
     activeJobs: 0,
     totalEarnings: 0,
     rating: 0,
-    profileViews: 0,
+    completedJobs: 0,
     totalBids: 0,
     successRate: 0,
   });
@@ -73,7 +74,7 @@ export default function WorkerDashboard() {
         if (jobsRes.data) setRecentJobs(jobsRes.data as Job[]);
         if (bidsRes.data) setRecentBids(bidsRes.data as Bid[]);
 
-        const totalEarnings = transactionsRes.data?.reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
+        const totalEarnings = transactionsRes.data?.reduce((sum, tr) => sum + (tr.amount || 0), 0) || 0;
         const acceptedBids = bidsRes.data?.filter((b) => b.status === 'accepted') || [];
         const activeJobs = acceptedBids.length;
         const allBids = allBidsRes.data || [];
@@ -85,7 +86,7 @@ export default function WorkerDashboard() {
           activeJobs,
           totalEarnings,
           rating: wpRating || 0,
-          profileViews: wpCompletedJobs || 0,
+          completedJobs: wpCompletedJobs || 0,
           totalBids: totalBidsCount,
           successRate,
         });
@@ -149,16 +150,15 @@ export default function WorkerDashboard() {
               <ShieldAlert className="w-5 h-5 text-yellow-400" />
             </div>
             <div className="flex-1">
-              <h3 className="text-sm font-semibold text-yellow-400">Verification Pending</h3>
+              <h3 className="text-sm font-semibold text-yellow-400">{t('cards.pendingVerification')}</h3>
               <p className="text-sm text-white/50 mt-1">
-                Your account is under review. You can browse jobs but cannot place bids until verified.
-                Please ensure your CNIC documents are uploaded in the profile section.
+                {t('worker.pendingVerifDesc')}
               </p>
               <Link
                 href="/worker/profile"
                 className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-yellow-400 hover:text-yellow-300 transition-colors"
               >
-                Go to Profile <ArrowRight className="w-3 h-3" />
+                {t('worker.profile')} <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
           </div>
@@ -173,19 +173,19 @@ export default function WorkerDashboard() {
               <UserCheck className="w-5 h-5 text-emerald-400" />
             </div>
             <div className="flex-1">
-              <h3 className="text-sm font-semibold text-emerald-400">Complete Your Profile to Get More Jobs</h3>
+              <h3 className="text-sm font-semibold text-emerald-400">{t('cards.completeProfile')}</h3>
               <p className="text-sm text-white/50 mt-1">
                 {!workerProfile.cnic_number && !workerProfile.bio
-                  ? 'Complete your profile setup with CNIC and bio to attract employers and get verified faster.'
+                  ? t('worker.completeProfileMsg')
                   : !workerProfile.cnic_number
-                    ? 'Upload your CNIC documents through the setup wizard to get verified faster.'
-                    : 'Add a bio and complete your profile to stand out to employers.'}
+                    ? t('worker.uploadCnicMsg')
+                    : t('worker.addBioMsg')}
               </p>
               <Link
                 href="/worker/setup"
                 className="inline-flex items-center gap-1 mt-2 text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
               >
-                Complete Setup <ArrowRight className="w-3 h-3" />
+                {t('cards.completeProfile')} <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
           </div>
@@ -196,68 +196,68 @@ export default function WorkerDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-white">
-            Welcome back, {profile?.full_name?.split(' ')[0] || 'Worker'}! 👋
+            {t('common.welcomeBack')}, {profile?.full_name?.split(' ')[0] || 'Worker'}!
           </h1>
           <p className="text-white/50 mt-1">
-            Here&apos;s what&apos;s happening with your work today.
+            {t('worker.dashboardSubtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-white/40">Status:</span>
+          <span className="text-sm text-white/40">{t('cards.status')}:</span>
           <span className={`badge ${statusBadgeClass}`}>
-            {(workerProfile?.status ?? '').charAt(0).toUpperCase() + (workerProfile?.status ?? '').slice(1)}
+            {t('common.' + (workerProfile?.status || 'pending'))}
           </span>
         </div>
       </div>
 
-      {/* Stats Grid - 6 columns */}
+      {/* Stats Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         <StatCard
-          title="Active Jobs"
+          title={t('common.active')}
           value={stats.activeJobs}
           icon={<Briefcase className="w-5 h-5" />}
           color="green"
-          change={`${workerProfile?.completed_jobs || 0} completed`}
+          change={`${stats.completedJobs} ${t('common.completed')}`}
           changeType="up"
         />
         <StatCard
-          title="Earnings"
+          title={t('worker.totalEarned')}
           value={formatCurrency(stats.totalEarnings)}
-          icon={<DollarSign className="w-5 h-5" />}
+          icon={<TrendingUp className="w-5 h-5" />}
           color="blue"
-          change="Lifetime"
+          change={t('worker.totalEarned')}
           changeType="up"
         />
         <StatCard
-          title="Rating"
+          title={t('cards.rating')}
           value={`${stats.rating.toFixed(1)}`}
           icon={<Star className="w-5 h-5" />}
           color="yellow"
-          change={`${workerProfile?.total_reviews || 0} reviews`}
+          change={`${workerProfile?.total_reviews || 0} ${t('cards.reviews')}`}
           changeType="up"
         />
         <StatCard
-          title="Bids Placed"
+          title={t('cards.bids')}
           value={stats.totalBids}
           icon={<MessageSquare className="w-5 h-5" />}
           color="purple"
-          change={`${stats.successRate}% success`}
+          change={`${stats.successRate}%`}
           changeType="up"
         />
         <StatCard
-          title="Completed"
-          value={stats.profileViews}
+          title={t('common.completed')}
+          value={stats.completedJobs}
           icon={<Eye className="w-5 h-5" />}
           color="green"
-          change="All time"
+          change={t('worker.totalEarned')}
           changeType="up"
         />
         <StatCard
-          title="Success Rate"
+          title={t('cards.rating')}
           value={`${stats.successRate}%`}
           icon={<TrendingUp className="w-5 h-5" />}
           color="blue"
-          change="Bid acceptance"
+          change={t('worker.totalEarned')}
           changeType="up"
         />
       </div>
@@ -269,7 +269,7 @@ export default function WorkerDashboard() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
               <MapPin className="w-5 h-5 text-emerald-400" />
-              My Location
+              {t('cards.myLocation')}
             </h2>
           </div>
           {hasLocation ? (
@@ -283,9 +283,9 @@ export default function WorkerDashboard() {
             <div className="h-[220px] rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-center">
               <div className="text-center">
                 <MapPin className="w-8 h-8 text-white/15 mx-auto mb-2" />
-                <p className="text-sm text-white/30">No location set</p>
+                <p className="text-sm text-white/30">{t('cards.noLocationSet')}</p>
                 <p className="text-xs text-white/20 mt-1">
-                  Add your location in the profile to appear on the map
+                  {t('cards.setLocationToAppear')}
                 </p>
               </div>
             </div>
@@ -301,19 +301,19 @@ export default function WorkerDashboard() {
         {/* Recent Jobs */}
         <div className="glass-card p-6 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">Recent Jobs</h2>
+            <h2 className="text-lg font-semibold text-white">{t('worker.recentJobs')}</h2>
             <Link
               href="/worker/jobs"
               className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
             >
-              View All <ArrowRight className="w-4 h-4" />
+              {t('dashboards.viewAll')} <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
           {recentJobs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Briefcase className="w-12 h-12 text-white/20 mb-3" />
-              <p className="text-white/40 text-sm">No open jobs available right now</p>
-              <p className="text-white/20 text-xs mt-1">Check back later for new opportunities</p>
+              <p className="text-white/40 text-sm">{t('worker.noJobsYet')}</p>
+              <p className="text-white/20 text-xs mt-1">{t('worker.noJobsYet')}</p>
             </div>
           ) : (
             <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar pr-1">
@@ -333,13 +333,7 @@ export default function WorkerDashboard() {
                     <div className="flex items-center gap-3 mt-1">
                       <span className="text-xs text-white/40">{job.city}</span>
                       <span className="text-xs text-white/30">•</span>
-                      <span className="text-xs text-white/40">{job.category?.name || 'General'}</span>
-                      {job.urgency === 'urgent' && (
-                        <>
-                          <span className="text-xs text-white/30">•</span>
-                          <span className="text-xs text-red-400 font-medium">Urgent</span>
-                        </>
-                      )}
+                      <span className="text-xs text-white/40">{job.category?.name || t('cards.general')}</span>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
@@ -361,26 +355,24 @@ export default function WorkerDashboard() {
       {/* Recent Bids */}
       <div className="glass-card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-white">My Recent Bids</h2>
+          <h2 className="text-lg font-semibold text-white">{t('worker.myActiveJobs')}</h2>
           <Link
             href="/worker/my-jobs"
             className="flex items-center gap-1 text-sm text-emerald-400 hover:text-emerald-300 transition-colors"
           >
-            View All <ArrowRight className="w-4 h-4" />
+            {t('dashboards.viewAll')} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
         {recentBids.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Clock className="w-12 h-12 text-white/20 mb-3" />
-            <p className="text-white/40 text-sm">No bids placed yet</p>
-            <p className="text-white/20 text-xs mt-1">
-              Browse available jobs and start bidding!
-            </p>
+            <p className="text-white/40 text-sm">{t('worker.noJobsYet')}</p>
+            <p className="text-white/20 text-xs mt-1">{t('worker.noJobsYet')}</p>
             <Link
               href="/worker/jobs"
               className="mt-4 px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all"
             >
-              Browse Jobs
+              {t('nav.workerBrowseJobs')}
             </Link>
           </div>
         ) : (
@@ -391,22 +383,22 @@ export default function WorkerDashboard() {
                 className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/5 transition-all"
               >
                 <div className="p-2.5 rounded-lg bg-blue-500/10 shrink-0">
-                  <DollarSign className="w-5 h-5 text-blue-400" />
+                  <Briefcase className="w-5 h-5 text-blue-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-medium text-white truncate">
-                    {bid.job?.title || 'Job'}
+                    {bid.job?.title || t('common.jobs')}
                   </h3>
                   <div className="flex items-center gap-3 mt-1">
                     <span className="text-xs text-white/40">
-                      Bid: {formatCurrency(bid.amount)}
+                      {t('cards.bids')}: {formatCurrency(bid.amount)}
                     </span>
                     <span className="text-xs text-white/30">•</span>
-                    <span className="text-xs text-white/40">{bid.estimated_days} days</span>
+                    <span className="text-xs text-white/40">{bid.estimated_days} {t('cards.days')}</span>
                   </div>
                 </div>
                 <span className={`badge text-xs ${getStatusColor(bid.status)}`}>
-                  {bid.status}
+                  {t('common.' + bid.status) || bid.status}
                 </span>
               </div>
             ))}

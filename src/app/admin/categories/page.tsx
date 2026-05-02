@@ -8,6 +8,7 @@ import {
   Search, Save, Trash2,
 } from 'lucide-react';
 import type { Category } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 interface CategoryWithCount extends Category {
   jobs_count: number;
@@ -37,6 +38,7 @@ const ICON_OPTIONS = [
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<CategoryWithCount[]>([]);
+  const { t } = useLanguageStore();
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newCategory, setNewCategory] = useState(EMPTY_CATEGORY);

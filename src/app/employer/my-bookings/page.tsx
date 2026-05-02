@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import type { Job, Bid, Worker } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 type TabKey = 'active' | 'pending' | 'completed' | 'cancelled';
 
@@ -38,6 +39,7 @@ const tabs: { key: TabKey; label: string; icon: React.ReactNode }[] = [
 
 export default function MyBookingsPage() {
   const { employerProfile } = useAuthStore();
+  const { t } = useLanguageStore();
   const [activeTab, setActiveTab] = useState<TabKey>('active');
   const [jobs, setJobs] = useState<JobWithBids[]>([]);
   const [loading, setLoading] = useState(true);
@@ -214,7 +216,7 @@ export default function MyBookingsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-white">My Bookings</h1>
+        <h1 className="text-2xl lg:text-3xl font-bold text-white">{t("employer.myBookings")}</h1>
         <p className="text-white/50 mt-1">Manage your jobs and worker bids</p>
       </div>
 

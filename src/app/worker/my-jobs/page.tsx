@@ -7,6 +7,7 @@ import { formatCurrency, timeAgo, getStatusColor } from '@/lib/utils';
 import { ClipboardList, DollarSign, Clock, Briefcase, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import type { Bid } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 type TabKey = 'active' | 'completed' | 'cancelled';
 
@@ -18,6 +19,7 @@ const tabs: { key: TabKey; label: string; icon: React.ReactNode }[] = [
 
 export default function MyJobsPage() {
   const { workerProfile } = useAuthStore();
+  const { t } = useLanguageStore();
   const [activeTab, setActiveTab] = useState<TabKey>('active');
   const [bids, setBids] = useState<Bid[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,8 +89,8 @@ export default function MyJobsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-white">My Jobs</h1>
-        <p className="text-white/50 mt-1">Track your bids and job progress</p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-white">{t('nav.workerMyJobs')}</h1>
+        <p className="text-white/50 mt-1">{t("worker.dashboardSubtitle")}</p>
       </div>
 
       <div className="flex gap-2 p-1 rounded-xl bg-white/5 border border-white/5">

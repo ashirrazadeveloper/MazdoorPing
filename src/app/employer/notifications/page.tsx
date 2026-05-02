@@ -6,9 +6,11 @@ import { supabase } from '@/lib/supabase';
 import { NotificationItem } from '@/components/shared/NotificationItem';
 import { BellOff, CheckCheck, Loader2 } from 'lucide-react';
 import type { Notification } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 export default function EmployerNotificationsPage() {
   const { profile } = useAuthStore();
+  const { t } = useLanguageStore();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
@@ -146,10 +148,10 @@ export default function EmployerNotificationsPage() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-white">Notifications</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold text-white">{t("common.notifications")}</h1>
           <p className="text-white/50 mt-1">
             {unreadCount > 0
-              ? `You have ${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`
+              ? `You have ${unreadCount} {t("notifications.unread")} notification${unreadCount !== 1 ? 's' : ''}`
               : 'You are all caught up'}
           </p>
         </div>
@@ -171,7 +173,7 @@ export default function EmployerNotificationsPage() {
             <div className="p-4 rounded-2xl bg-white/5 mb-4">
               <BellOff className="w-12 h-12 text-white/20" />
             </div>
-            <h3 className="text-lg font-semibold text-white mb-2">No notifications</h3>
+            <h3 className="text-lg font-semibold text-white mb-2">{t("notifications.noNotifications")}</h3>
             <p className="text-white/40 text-sm max-w-md">
               When workers bid on your jobs, job statuses update, or payments are processed,
               you will see notifications here.
@@ -192,8 +194,8 @@ export default function EmployerNotificationsPage() {
 
       {notifications.length > 0 && (
         <div className="flex items-center justify-between text-xs text-white/30 px-1">
-          <span>Total: {notifications.length} notifications</span>
-          <span>{unreadCount} unread</span>
+          <span>{t("common.total")} {notifications.length} {t("common.notifications")}</span>
+          <span>{unreadCount} {t("notifications.unread")}</span>
         </div>
       )}
     </div>

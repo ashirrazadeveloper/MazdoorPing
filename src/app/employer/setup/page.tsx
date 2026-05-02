@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
 import { supabase } from '@/lib/supabase';
 import { getInitials } from '@/lib/utils';
+import { useLanguageStore } from '@/store/language-store';
 import {
   User,
   Mail,
@@ -238,6 +239,7 @@ async function uploadFileToStorage(
 
 export default function EmployerSetupPage() {
   const router = useRouter();
+  const { t } = useLanguageStore();
   const { profile, employerProfile, fetchProfiles } = useAuthStore();
 
   const [currentStep, setCurrentStep] = useState(1);

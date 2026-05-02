@@ -9,6 +9,7 @@ import {
   Phone, Mail, Clock, FileWarning,
 } from 'lucide-react';
 import type { Worker, WorkerSkill } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 type WorkerWithProfile = Worker & {
   profile: { id: string; email: string; full_name: string; phone: string; avatar_url: string | null };
@@ -19,6 +20,7 @@ type CnicViewer = { url: string; label: string; workerName: string; cnicNumber: 
 
 export default function VerificationPage() {
   const { user } = useAuthStore();
+  const { t } = useLanguageStore();
   const [workers, setWorkers] = useState<WorkerWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');

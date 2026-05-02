@@ -1,7 +1,7 @@
 'use client';
 
 import { Star, MapPin, Briefcase, CheckCircle } from 'lucide-react';
-import { getInitials, getStatusColor } from '@/lib/utils';
+import { formatCurrency, getInitials, getStatusColor } from '@/lib/utils';
 import type { Worker } from '@/types';
 import { useLanguageStore } from '@/store/language-store';
 
@@ -27,7 +27,7 @@ export function WorkerCard({ worker, showActions, onViewProfile, onSave }: Worke
               {worker.profile?.full_name || 'Worker'}
             </h3>
             <span className={`badge ${getStatusColor(worker.status)}`}>
-              {worker.status}
+              {t('common.' + worker.status)}
             </span>
           </div>
           {worker.profile?.phone && (
@@ -57,7 +57,7 @@ export function WorkerCard({ worker, showActions, onViewProfile, onSave }: Worke
             </div>
           )}
           <p className="text-sm font-medium text-emerald-400">
-            PKR {worker.hourly_rate}/hr {worker.availability && <CheckCircle className="w-3.5 h-3.5 inline text-emerald-400 ml-1" />}
+            {formatCurrency(worker.hourly_rate)} {t('cards.perHour')} {worker.availability && <CheckCircle className="w-3.5 h-3.5 inline text-emerald-400 ml-1" />}
           </p>
         </div>
       </div>

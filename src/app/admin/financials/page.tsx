@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/auth-store';
 import {
   DollarSign, Wallet, Clock, Percent, CheckCircle, XCircle,
   ChevronLeft, ChevronRight, ArrowUpRight, ArrowDownLeft,
-  Filter, X,
+  Filter, X, Trash2, AlertTriangle,
 } from 'lucide-react';
 import { StatCard } from '@/components/shared/StatCard';
 import {
@@ -15,6 +15,7 @@ import {
   ResponsiveContainer, Legend,
 } from 'recharts';
 import type { Transaction, Withdrawal } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 const monthlyRevenueData = [
   { month: 'Jan', platform_fee: 24500, withdrawals: 180000 },
@@ -59,6 +60,7 @@ type TransactionWithProfiles = Transaction & {
 
 export default function FinancialsPage() {
   const { user } = useAuthStore();
+  const { t } = useLanguageStore();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalRevenue: 0,
@@ -80,6 +82,8 @@ export default function FinancialsPage() {
   const [adminNotes, setAdminNotes] = useState('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -192,6 +196,42 @@ export default function FinancialsPage() {
   const wdTotalPages = Math.ceil(wdTotal / ITEMS_PER_PAGE);
   const txTotalPages = Math.ceil(txTotal / ITEMS_PER_PAGE);
 
+  const handleResetUnverifiedDeposits = async () => {
+    setResetting(true);
+    try {
+      // Cancel all deposit transactions that were completed without admin verification
+      const { data: unverifiedDeposits, error: fetchError } = await supabase
+        .from('transactions')
+        .select('id, amount')
+        .eq('type', 'credit')
+        .eq('status', 'completed')
+        .is('verified_by', null);
+
+      if (fetchError) throw fetchError;
+
+      if (unverifiedDeposits && unverifiedDeposits.length > 0) {
+        const ids = unverifiedDeposits.map((d) => d.id);
+        const { error: updateError } = await supabase
+          .from('transactions')
+          .update({ status: 'cancelled' })
+          .in('id', ids);
+
+        if (updateError) throw updateError;
+        showToast(`Reset ${ids.length} unverified deposit(s) to cancelled`, 'success');
+      } else {
+        showToast('No unverified deposits found', 'success');
+      }
+
+      setShowResetConfirm(false);
+      setRefreshKey((k) => k + 1);
+    } catch (err) {
+      console.error('Failed to reset deposits:', err);
+      showToast('Failed to reset deposits', 'error');
+    } finally {
+      setResetting(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Toast */}
@@ -205,9 +245,18 @@ export default function FinancialsPage() {
       )}
 
       {/* Header */}
-      <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-white">Financials</h1>
-        <p className="text-white/50 mt-1">Revenue, transactions, and withdrawal management</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-bold text-white">Financials</h1>
+          <p className="text-white/50 mt-1">Revenue, transactions, and withdrawal management</p>
+        </div>
+        <button
+          onClick={() => setShowResetConfirm(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition-all text-sm font-medium"
+        >
+          <Trash2 className="w-4 h-4" />
+          Reset Unverified Deposits
+        </button>
       </div>
 
       {/* Overview Stats */}
@@ -659,6 +708,45 @@ export default function FinancialsPage() {
                 className="flex-1 py-2.5 px-4 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/20 font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {actionLoading ? 'Processing...' : 'Reject'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Unverified Deposits Confirmation Modal */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowResetConfirm(false)} />
+          <div className="relative glass-card p-6 w-full max-w-md">
+            <button
+              onClick={() => setShowResetConfirm(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-white/5 text-white/40 hover:text-white transition-all"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-lg bg-red-500/20">
+                <AlertTriangle className="w-5 h-5 text-red-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-white">Reset Unverified Deposits</h2>
+            </div>
+            <p className="text-sm text-white/50 mb-4 leading-relaxed">
+              This will cancel all deposit transactions that were completed without admin verification (verified_by is null). Users will see their fake deposits removed. This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 py-2.5 px-4 rounded-xl text-white/50 hover:text-white hover:bg-white/5 font-medium text-sm transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleResetUnverifiedDeposits}
+                disabled={resetting}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/20 font-medium text-sm transition-all disabled:opacity-50"
+              >
+                {resetting ? 'Processing...' : 'Reset All'}
               </button>
             </div>
           </div>

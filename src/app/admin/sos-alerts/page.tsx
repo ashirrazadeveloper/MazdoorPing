@@ -8,6 +8,7 @@ import {
   X, MessageSquare, User,
 } from 'lucide-react';
 import type { SOSAlert, SOSStatus } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 const STATUS_FILTERS: { label: string; value: SOSStatus | 'all' }[] = [
   { label: 'All', value: 'all' },
@@ -25,6 +26,7 @@ type SOSAlertWithWorker = SOSAlert & {
 
 export default function SOSAlertsPage() {
   const [alerts, setAlerts] = useState<SOSAlertWithWorker[]>([]);
+  const { t } = useLanguageStore();
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<SOSStatus | 'all'>('all');
   const [actionLoading, setActionLoading] = useState(false);

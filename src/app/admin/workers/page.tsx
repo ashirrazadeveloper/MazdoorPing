@@ -9,6 +9,7 @@ import {
   ChevronLeft, ChevronRight, Star, MapPin, Phone, Mail, X,
 } from 'lucide-react';
 import type { Worker, WorkerStatus, WorkerSkill } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 const STATUS_FILTERS: { label: string; value: WorkerStatus | 'all' }[] = [
   { label: 'All', value: 'all' },
@@ -27,6 +28,7 @@ type WorkerWithProfile = Worker & {
 
 export default function WorkersPage() {
   const { user } = useAuthStore();
+  const { t } = useLanguageStore();
   const [workers, setWorkers] = useState<WorkerWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');

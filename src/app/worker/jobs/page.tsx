@@ -5,9 +5,11 @@ import { supabase } from '@/lib/supabase';
 import { JobCard } from '@/components/shared/JobCard';
 import { Search, Filter, Briefcase, ChevronDown, Loader2 } from 'lucide-react';
 import type { Job, Category } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 export default function BrowseJobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const { t } = useLanguageStore();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -126,8 +128,8 @@ export default function BrowseJobsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-white">Browse Jobs</h1>
-        <p className="text-white/50 mt-1">Find work that matches your skills and location</p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-white">{t('dashboards.browseJobs')}</h1>
+        <p className="text-white/50 mt-1">{t("worker.dashboardSubtitle")}</p>
       </div>
 
       <form onSubmit={handleSearch} className="flex gap-3">
@@ -151,7 +153,7 @@ export default function BrowseJobsPage() {
           }`}
         >
           <Filter className="w-4 h-4" />
-          <span className="hidden sm:inline">Filters</span>
+          <span className="hidden sm:inline">{t("common.filters")}</span>
           <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
         </button>
       </form>
@@ -159,7 +161,7 @@ export default function BrowseJobsPage() {
       {showFilters && (
         <div className="glass-card p-4 space-y-4 animate-fade-in">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-white">Filters</h3>
+            <h3 className="text-sm font-semibold text-white">{t("common.filters")}</h3>
             {hasActiveFilters && (
               <button onClick={clearFilters} className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors">
                 Clear All
@@ -168,26 +170,26 @@ export default function BrowseJobsPage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-white/40 mb-1.5 font-medium">Category</label>
+              <label className="block text-xs text-white/40 mb-1.5 font-medium">{t("cards.category")}</label>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="glass-input w-full px-4 py-2.5 text-sm text-white appearance-none cursor-pointer"
               >
-                <option value="" className="bg-gray-900">All Categories</option>
+                <option value="" className="bg-gray-900">{t("common.all")}</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id} className="bg-gray-900">{cat.name}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs text-white/40 mb-1.5 font-medium">City</label>
+              <label className="block text-xs text-white/40 mb-1.5 font-medium">{t("worker.city")}</label>
               <select
                 value={selectedCity}
                 onChange={(e) => setSelectedCity(e.target.value)}
                 className="glass-input w-full px-4 py-2.5 text-sm text-white appearance-none cursor-pointer"
               >
-                <option value="" className="bg-gray-900">All Cities</option>
+                <option value="" className="bg-gray-900">{t("common.all")}</option>
                 {cities.map((city) => (
                   <option key={city} value={city} className="bg-gray-900">{city}</option>
                 ))}
@@ -231,7 +233,7 @@ export default function BrowseJobsPage() {
           <div className="p-4 rounded-2xl bg-white/5 mb-4">
             <Briefcase className="w-12 h-12 text-white/20" />
           </div>
-          <h3 className="text-lg font-semibold text-white mb-2">No jobs found</h3>
+          <h3 className="text-lg font-semibold text-white mb-2">{t("common.noData")}</h3>
           <p className="text-white/40 text-sm max-w-md">
             {hasActiveFilters
               ? 'Try adjusting your filters or search query to find available jobs.'

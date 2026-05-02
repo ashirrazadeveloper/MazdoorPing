@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import type { Worker, WorkerStatus, WorkerSkill, Review, Job } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 const MapView = dynamic(() => import('./MapLeaflet'), { ssr: false });
 
@@ -79,6 +80,7 @@ function StatusBadge({ status }: { status: string }) {
 // ─── Main Component ────────────────────────────────────────────────
 export default function ManageWorkersPage() {
   const { user } = useAuthStore();
+  const { t } = useLanguageStore();
   const [workers, setWorkers] = useState<WorkerWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');

@@ -6,9 +6,11 @@ import { supabase } from '@/lib/supabase';
 import { WorkerCard } from '@/components/shared/WorkerCard';
 import { Search, Filter, Users, ChevronDown, Loader2 } from 'lucide-react';
 import type { Worker, Category } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 export default function FindWorkersPage() {
   const { employerProfile } = useAuthStore();
+  const { t } = useLanguageStore();
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -156,7 +158,7 @@ export default function FindWorkersPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-white">Find Workers</h1>
+        <h1 className="text-2xl lg:text-3xl font-bold text-white">{t("employer.findWorkers")}</h1>
         <p className="text-white/50 mt-1">Browse skilled workers ready to help with your projects</p>
       </div>
 

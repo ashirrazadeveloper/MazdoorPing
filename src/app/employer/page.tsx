@@ -5,12 +5,14 @@ import { useAuthStore } from '@/store/auth-store';
 import { supabase } from '@/lib/supabase';
 import { formatCurrency, timeAgo, getStatusColor } from '@/lib/utils';
 import { StatCard } from '@/components/shared/StatCard';
-import { Briefcase, DollarSign, Star, Zap, ArrowRight, Clock, MessageCircle, PlusCircle, Search, UserPlus, X } from 'lucide-react';
+import { Briefcase, Star, Zap, ArrowRight, Clock, MessageCircle, PlusCircle, Search, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import type { Job, Bid, Worker } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 export default function EmployerDashboard() {
   const { employerProfile, profile } = useAuthStore();
+  const { t } = useLanguageStore();
   const [recentJobs, setRecentJobs] = useState<Job[]>([]);
   const [recentBids, setRecentBids] = useState<(Bid & { worker?: Worker })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,10 +112,10 @@ export default function EmployerDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-white">
-            Welcome back, {profile?.full_name?.split(' ')[0] || 'Employer'}! 👋
+            {t('common.welcomeBack')}, {profile?.full_name?.split(' ')[0] || t('auth.employer')}!
           </h1>
           <p className="text-white/50 mt-1">
-            Here&apos;s an overview of your hiring activity.
+            {t('employer.dashboardSubtitle')}
           </p>
         </div>
       </div>
@@ -128,17 +130,17 @@ export default function EmployerDashboard() {
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-sm font-bold text-white">
-                Complete Your Employer Profile
+                {t('cards.completeEmployerProfile')}
               </h3>
               <p className="text-xs text-white/50 mt-0.5">
-                Add your business details to unlock full hiring features and build trust with workers.
+                {t('cards.employerSetupDesc')}
               </p>
             </div>
             <Link
               href="/employer/setup"
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-semibold hover:shadow-lg hover:shadow-blue-500/25 hover:-translate-y-0.5 transition-all shrink-0"
             >
-              Set Up Now
+              {t('worker.setupTitle')}
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -155,8 +157,8 @@ export default function EmployerDashboard() {
             <PlusCircle className="w-6 h-6 text-blue-400" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-white">Post New Job</h3>
-            <p className="text-xs text-white/40">Create a new job listing</p>
+            <h3 className="text-sm font-semibold text-white">{t('employer.postJob')}</h3>
+            <p className="text-xs text-white/40">{t('cards.createNewJob')}</p>
           </div>
           <ArrowRight className="w-5 h-5 text-white/20 ml-auto group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
         </Link>
@@ -168,8 +170,8 @@ export default function EmployerDashboard() {
             <Search className="w-6 h-6 text-blue-400" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-white">Find Workers</h3>
-            <p className="text-xs text-white/40">Browse available workers</p>
+            <h3 className="text-sm font-semibold text-white">{t('employer.findWorkers')}</h3>
+            <p className="text-xs text-white/40">{t('cards.browseWorkers')}</p>
           </div>
           <ArrowRight className="w-5 h-5 text-white/20 ml-auto group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
         </Link>
@@ -178,35 +180,35 @@ export default function EmployerDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Total Posted Jobs"
+          title={t('employer.totalPosted')}
           value={stats.totalJobs}
           icon={<Briefcase className="w-6 h-6" />}
           color="blue"
-          change={`${stats.activeJobs} currently active`}
+          change={`${stats.activeJobs} ${t('common.active')}`}
           changeType="up"
         />
         <StatCard
-          title="Active Jobs"
+          title={t('employer.activeJobs')}
           value={stats.activeJobs}
           icon={<Zap className="w-6 h-6" />}
           color="green"
-          change="Open & in progress"
+          change={t('common.open')}
           changeType="up"
         />
         <StatCard
-          title="Total Spent"
+          title={t('employer.totalSpent')}
           value={formatCurrency(stats.totalSpent)}
-          icon={<DollarSign className="w-6 h-6" />}
+          icon={<Star className="w-6 h-6" />}
           color="orange"
-          change="Lifetime spending"
+          change={t('employer.totalSpent')}
           changeType="up"
         />
         <StatCard
-          title="Worker Rating"
+          title={t('cards.rating')}
           value={`${stats.rating.toFixed(1)} ★`}
           icon={<Star className="w-6 h-6" />}
           color="yellow"
-          change={`${employerProfile?.total_reviews || 0} reviews`}
+          change={`${employerProfile?.total_reviews || 0} ${t('cards.reviews')}`}
           changeType="up"
         />
       </div>
@@ -216,24 +218,24 @@ export default function EmployerDashboard() {
         {/* Recent Job Postings */}
         <div className="glass-card p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">Recent Job Postings</h2>
+            <h2 className="text-lg font-semibold text-white">{t('cards.recentJobs')}</h2>
             <Link
               href="/employer/my-bookings"
               className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 transition-colors"
             >
-              View All <ArrowRight className="w-4 h-4" />
+              {t('dashboards.viewAll')} <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
           {recentJobs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Briefcase className="w-12 h-12 text-white/20 mb-3" />
-              <p className="text-white/40 text-sm">No jobs posted yet</p>
-              <p className="text-white/20 text-xs mt-1">Start by posting your first job</p>
+              <p className="text-white/40 text-sm">{t('employer.noJobs')}</p>
+              <p className="text-white/20 text-xs mt-1">{t('cards.postFirstJob')}</p>
               <Link
                 href="/employer/post-job"
                 className="mt-4 px-4 py-2 text-sm font-medium rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border border-blue-500/20 transition-all"
               >
-                Post a Job
+                {t('employer.postJob')}
               </Link>
             </div>
           ) : (
@@ -253,7 +255,7 @@ export default function EmployerDashboard() {
                     <div className="flex items-center gap-3 mt-1">
                       <span className="text-xs text-white/40">{job.city}</span>
                       <span className="text-xs text-white/30">•</span>
-                      <span className="text-xs text-white/40">{job.bids_count || 0} bids</span>
+                      <span className="text-xs text-white/40">{job.bids_count || 0} {t('cards.bids')}</span>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
@@ -262,7 +264,7 @@ export default function EmployerDashboard() {
                     </p>
                     <div className="flex items-center gap-1.5 mt-1">
                       <span className={`badge text-[10px] ${getStatusColor(job.status)}`}>
-                        {job.status.replace('_', ' ')}
+                        {t('common.' + (job.status === 'in_progress' ? 'inProgress' : job.status)) || job.status}
                       </span>
                     </div>
                   </div>
@@ -275,21 +277,19 @@ export default function EmployerDashboard() {
         {/* Recent Bids Received */}
         <div className="glass-card p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">Recent Bids Received</h2>
+            <h2 className="text-lg font-semibold text-white">{t('cards.recentBids')}</h2>
             <Link
               href="/employer/my-bookings"
               className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 transition-colors"
             >
-              View All <ArrowRight className="w-4 h-4" />
+              {t('dashboards.viewAll')} <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
           {recentBids.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <MessageCircle className="w-12 h-12 text-white/20 mb-3" />
-              <p className="text-white/40 text-sm">No bids received yet</p>
-              <p className="text-white/20 text-xs mt-1">
-                Workers will bid on your posted jobs
-              </p>
+              <p className="text-white/40 text-sm">{t('cards.noBidsYet')}</p>
+              <p className="text-white/20 text-xs mt-1">{t('cards.bidsWillAppear')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -303,14 +303,14 @@ export default function EmployerDashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-medium text-white truncate">
-                      {bid.worker?.profile?.full_name || 'Worker'}
+                      {bid.worker?.profile?.full_name || t('auth.worker')}
                     </h3>
                     <div className="flex items-center gap-3 mt-1">
                       <span className="text-xs text-white/40">
-                        Bid: {formatCurrency(bid.amount)}
+                        {t('cards.bids')}: {formatCurrency(bid.amount)}
                       </span>
                       <span className="text-xs text-white/30">•</span>
-                      <span className="text-xs text-white/40">{bid.estimated_days} days</span>
+                      <span className="text-xs text-white/40">{bid.estimated_days} {t('cards.days')}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 text-xs text-white/30 shrink-0">

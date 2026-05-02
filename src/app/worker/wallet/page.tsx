@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuthStore } from '@/store/auth-store';
 import { useLanguageStore } from '@/store/language-store';
 import { supabase } from '@/lib/supabase';
@@ -24,11 +24,27 @@ import {
   Save,
   Percent,
   Check,
+  Copy,
+  CheckCheck,
+  ChevronLeft,
+  ChevronRight,
+  Smartphone,
+  Landmark,
+  CircleDollarSign,
 } from 'lucide-react';
-import type { Transaction, Settings } from '@/types';
+import type { Transaction } from '@/types';
 
 const BANK_OPTIONS = [
   'HBL', 'Meezan Bank', 'UBL', 'Alfalah', 'JazzCash', 'EasyPaisa', 'Other'
+];
+
+const presetAmounts = [500, 1000, 2000, 5000, 10000];
+
+const paymentMethods = [
+  { id: 'jazzcash', name: 'JazzCash', nameUr: 'جاز کیش', color: 'from-red-500 to-red-600', number: '0300-1234567', icon: Smartphone },
+  { id: 'easypaisa', name: 'EasyPaisa', nameUr: 'ایزی پیسہ', color: 'from-green-500 to-green-600', number: '0301-1234567', icon: Smartphone },
+  { id: 'bank', name: 'Bank Transfer', nameUr: 'بینک ٹرانسفر', color: 'from-blue-500 to-blue-600', details: { bank: 'HBL', account: '1234-5678-9012-34', title: 'MazdoorPing Pvt Ltd' }, icon: Landmark },
+  { id: 'sadapay', name: 'SadaPay', nameUr: 'سادا پے', color: 'from-purple-500 to-purple-600', number: '0302-1234567', icon: CircleDollarSign },
 ];
 
 export default function WalletPage() {
@@ -40,12 +56,7 @@ export default function WalletPage() {
   const [showDeposit, setShowDeposit] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
   const [depositing, setDepositing] = useState(false);
-  const [depositAmount, setDepositAmount] = useState('');
-  const [depositMethod, setDepositMethod] = useState('');
-  const [depositAccount, setDepositAccount] = useState('');
-  const [depositTxId, setDepositTxId] = useState('');
   const [depositError, setDepositError] = useState('');
-  const [depositSuccess, setDepositSuccess] = useState('');
   const [withdrawForm, setWithdrawForm] = useState({
     amount: '',
     bankName: '',
@@ -54,6 +65,15 @@ export default function WalletPage() {
   });
   const [withdrawError, setWithdrawError] = useState('');
   const [withdrawSuccess, setWithdrawSuccess] = useState('');
+
+  // Multi-step deposit wizard
+  const [paymentStep, setPaymentStep] = useState(1);
+  const [depositAmount, setDepositAmount] = useState('');
+  const [selectedMethod, setSelectedMethod] = useState<typeof paymentMethods[0] | null>(null);
+  const [depositReference, setDepositReference] = useState('');
+  const [depositSubmitted, setDepositSubmitted] = useState(false);
+  const [submittedTxnId, setSubmittedTxnId] = useState('');
+  const [copiedNumber, setCopiedNumber] = useState(false);
 
   // Bank details
   const [showBankForm, setShowBankForm] = useState(false);
@@ -76,70 +96,69 @@ export default function WalletPage() {
     totalCommission: 0,
   });
 
+  const refreshWalletData = useCallback(async (userId: string) => {
+    const { data: transactionsData } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('to_user_id', userId)
+      .order('created_at', { ascending: false });
+
+    const txns = (transactionsData || []) as Transaction[];
+    setTransactions(txns);
+
+    const credits = txns.filter((tr) => tr.type === 'credit');
+    const completedCredits = credits.filter((tr) => tr.status === 'completed');
+    const pendingCredits = credits.filter((tr) => tr.status === 'pending');
+    const debits = txns.filter((tr) => tr.type === 'debit' && tr.status === 'completed');
+
+    const commissionDebits = debits.filter((d) =>
+      d.description.toLowerCase().includes('commission') ||
+      d.description.toLowerCase().includes('platform')
+    );
+    const totalCommission = commissionDebits.reduce((sum, d) => sum + d.amount, 0);
+
+    const totalEarned = completedCredits.reduce((sum, tr) => sum + tr.amount, 0);
+    const pending = pendingCredits.reduce((sum, tr) => sum + tr.amount, 0);
+    const totalDebited = debits.reduce((sum, tr) => sum + tr.amount, 0);
+    const balance = totalEarned - totalDebited;
+
+    setWalletData({
+      balance: Math.max(0, balance),
+      totalEarned,
+      pending,
+      totalCommission,
+    });
+  }, []);
+
   useEffect(() => {
     if (!workerProfile) return;
 
     let cancelled = false;
 
     (async () => {
-      const { data: transactionsData } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('to_user_id', workerProfile.user_id)
-        .order('created_at', { ascending: false });
-
       if (cancelled) return;
+      await refreshWalletData(workerProfile.user_id);
 
-      const txns = (transactionsData || []) as Transaction[];
-      setTransactions(txns);
-
-      const credits = txns.filter((tr) => tr.type === 'credit');
-      const completedCredits = credits.filter((tr) => tr.status === 'completed');
-      const pendingCredits = credits.filter((tr) => tr.status === 'pending');
-      const debits = txns.filter((tr) => tr.type === 'debit' && tr.status === 'completed');
-
-      // Commission debits (description contains 'commission')
-      const commissionDebits = debits.filter((d) =>
-        d.description.toLowerCase().includes('commission') ||
-        d.description.toLowerCase().includes('platform')
-      );
-      const totalCommission = commissionDebits.reduce((sum, d) => sum + d.amount, 0);
-
-      const totalEarned = completedCredits.reduce((sum, tr) => sum + tr.amount, 0);
-      const pending = pendingCredits.reduce((sum, tr) => sum + tr.amount, 0);
-      const totalDebited = debits.reduce((sum, tr) => sum + tr.amount, 0);
-      const balance = totalEarned - totalDebited;
-
-      setWalletData({
-        balance: Math.max(0, balance),
-        totalEarned,
-        pending,
-        totalCommission,
-      });
-      setLoading(false);
-    })();
-
-    // Load bank details from worker profile
-    if (workerProfile.bank_name || workerProfile.account_number) {
-      setBankForm({
+      if (workerProfile.bank_name || workerProfile.account_number) {
+        setBankForm({
+          bankName: workerProfile.bank_name || '',
+          accountNumber: workerProfile.account_number || '',
+          accountTitle: workerProfile.account_title || '',
+        });
+      }
+      setWithdrawForm({
+        amount: '',
         bankName: workerProfile.bank_name || '',
         accountNumber: workerProfile.account_number || '',
         accountTitle: workerProfile.account_title || '',
       });
-    }
 
-    // Also load bank details into withdraw form
-    setWithdrawForm({
-      amount: '',
-      bankName: workerProfile.bank_name || '',
-      accountNumber: workerProfile.account_number || '',
-      accountTitle: workerProfile.account_title || '',
-    });
+      setLoading(false);
+    })();
 
     return () => { cancelled = true; };
-  }, [workerProfile]);
+  }, [workerProfile, refreshWalletData]);
 
-  // Fetch platform commission
   useEffect(() => {
     (async () => {
       const { data } = await supabase
@@ -151,6 +170,17 @@ export default function WalletPage() {
         setCommission(parseFloat(data.value) || 10);
       }
     })();
+  }, []);
+
+  const resetDepositForm = useCallback(() => {
+    setPaymentStep(1);
+    setDepositAmount('');
+    setSelectedMethod(null);
+    setDepositReference('');
+    setDepositError('');
+    setDepositSubmitted(false);
+    setSubmittedTxnId('');
+    setCopiedNumber(false);
   }, []);
 
   const maskAccountNumber = (num: string) => {
@@ -200,8 +230,6 @@ export default function WalletPage() {
         accountNumber: bankForm.accountNumber.trim(),
         accountTitle: bankForm.accountTitle.trim(),
       });
-
-      // Refresh worker profile
       useAuthStore.getState().fetchProfiles();
     } catch {
       setBankError(t('common.failed'));
@@ -238,7 +266,6 @@ export default function WalletPage() {
     }
 
     setWithdrawing(true);
-
     try {
       const { error } = await supabase.from('withdrawals').insert({
         worker_id: workerProfile?.id,
@@ -257,29 +284,7 @@ export default function WalletPage() {
       setWithdrawSuccess(t('worker.withdrawalSubmitted'));
       setWithdrawForm({ ...withdrawForm, amount: '' });
       setShowWithdraw(false);
-
-      // Refresh wallet data
-      const { data: transactionsData } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('to_user_id', workerProfile?.user_id)
-        .order('created_at', { ascending: false });
-
-      const txns = (transactionsData || []) as Transaction[];
-      setTransactions(txns);
-
-      const credits = txns.filter((tr) => tr.type === 'credit');
-      const completedCredits = credits.filter((tr) => tr.status === 'completed');
-      const debits = txns.filter((tr) => tr.type === 'debit' && tr.status === 'completed');
-      const totalEarned = completedCredits.reduce((sum, tr) => sum + tr.amount, 0);
-      const totalDebited = debits.reduce((sum, tr) => sum + tr.amount, 0);
-
-      setWalletData({
-        balance: Math.max(0, totalEarned - totalDebited),
-        totalEarned,
-        pending: txns.filter((tr) => tr.type === 'credit' && tr.status === 'pending').reduce((s, tr) => s + tr.amount, 0),
-        totalCommission: walletData.totalCommission,
-      });
+      await refreshWalletData(workerProfile?.user_id || '');
     } catch {
       setWithdrawError(t('common.failed'));
     } finally {
@@ -287,79 +292,369 @@ export default function WalletPage() {
     }
   };
 
-  const handleDeposit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setDepositError('');
-    setDepositSuccess('');
+  const handleCopyNumber = (number: string) => {
+    const cleaned = number.replace(/-/g, '');
+    navigator.clipboard.writeText(cleaned).then(() => {
+      setCopiedNumber(true);
+      setTimeout(() => setCopiedNumber(false), 2000);
+    });
+  };
 
+  const handleDepositSubmit = async () => {
+    setDepositError('');
     const amount = parseFloat(depositAmount);
+
     if (!amount || amount < 500) {
-      setDepositError(language === 'ur' ? 'کم از کم PKR 500 جمع کریں' : 'Please deposit at least PKR 500.');
+      setDepositError(t('payment.minAmount'));
       return;
     }
     if (amount > 100000) {
-      setDepositError(language === 'ur' ? 'ایک وقت میں PKR 100,000 سے زیادہ نہیں' : 'Maximum deposit is PKR 100,000 at once.');
+      setDepositError(t('payment.maxAmount'));
       return;
     }
-    if (!depositMethod) {
-      setDepositError(language === 'ur' ? 'ادائیگی کا طریقہ منتخب کریں' : 'Please select a deposit method.');
+    if (!selectedMethod) {
+      setDepositError(t('wallet2.selectMethod'));
       return;
     }
-    if (!depositAccount.trim() || depositAccount.trim().length < 7) {
-      setDepositError(language === 'ur' ? 'درست اکاؤنٹ/فون نمبر درج کریں' : 'Please enter a valid account/phone number.');
+    if (!depositReference.trim()) {
+      setDepositError(t('payment.enterReference'));
       return;
     }
 
     setDepositing(true);
     try {
-      const { error } = await supabase.from('transactions').insert({
+      const { data, error } = await supabase.from('transactions').insert({
         from_user_id: workerProfile?.user_id,
         to_user_id: workerProfile?.user_id,
         amount,
         type: 'credit',
         status: 'pending',
-        description: `Deposit via ${depositMethod} - Pending Verification`,
-        metadata: { deposit_method: depositMethod, account_number: depositAccount.trim(), transaction_id: depositTxId.trim() },
-      });
+        description: `Deposit via ${selectedMethod.name} - Pending Verification`,
+        metadata: { deposit_method: selectedMethod.id, transaction_id: depositReference.trim() },
+      }).select();
 
       if (error) {
         setDepositError(error.message);
         return;
       }
 
-      setDepositSuccess(t('wallet2.depositPendingMsg'));
-      setDepositAmount('');
-      setDepositMethod('');
-      setDepositAccount('');
-      setDepositTxId('');
-      setShowDeposit(false);
+      const txn = (data as Transaction[])[0];
+      setSubmittedTxnId(txn?.id?.slice(0, 8).toUpperCase() || 'N/A');
+      setDepositSubmitted(true);
+      setPaymentStep(5);
 
-      // Refresh wallet data
-      const { data: transactionsData } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('to_user_id', workerProfile?.user_id)
-        .order('created_at', { ascending: false });
-
-      const txns = (transactionsData || []) as Transaction[];
-      setTransactions(txns);
-
-      const completedCredits = txns.filter((tr) => tr.type === 'credit' && tr.status === 'completed');
-      const debits = txns.filter((tr) => tr.type === 'debit' && tr.status === 'completed');
-      const totalEarned = completedCredits.reduce((sum, tr) => sum + tr.amount, 0);
-      const totalDebited = debits.reduce((sum, tr) => sum + tr.amount, 0);
-
-      setWalletData({
-        balance: Math.max(0, totalEarned - totalDebited),
-        totalEarned,
-        pending: txns.filter((tr) => tr.type === 'credit' && tr.status === 'pending').reduce((s, tr) => s + tr.amount, 0),
-        totalCommission: walletData.totalCommission,
-      });
+      await refreshWalletData(workerProfile?.user_id || '');
     } catch {
       setDepositError(t('common.failed'));
     } finally {
       setDepositing(false);
     }
+  };
+
+  const renderStepIndicator = (step: number, title: string) => {
+    const isActive = paymentStep === step;
+    const isCompleted = paymentStep > step;
+    return (
+      <div className="flex items-center gap-2">
+        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+          isCompleted ? 'bg-emerald-500/20 text-emerald-400' :
+          isActive ? 'bg-emerald-500/30 text-emerald-400 ring-2 ring-emerald-500/50' :
+          'bg-white/5 text-white/30'
+        }`}>
+          {isCompleted ? <Check className="w-3.5 h-3.5" /> : step}
+        </div>
+        <span className={`text-xs font-medium transition-all ${isActive ? 'text-white' : isCompleted ? 'text-emerald-400' : 'text-white/30'}`}>
+          {title}
+        </span>
+      </div>
+    );
+  };
+
+  const renderDepositStep = () => {
+    // Step 5: Success
+    if (depositSubmitted) {
+      return (
+        <div className="text-center py-6">
+          <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+            <CheckCheck className="w-8 h-8 text-emerald-400" />
+          </div>
+          <h3 className="text-lg font-bold text-white mb-2">{t('payment.depositPending')}</h3>
+          <p className="text-sm text-white/50 mb-4 leading-relaxed">{t('payment.depositPendingMsg')}</p>
+          <div className="glass-card p-3 bg-white/[0.02] border border-white/5 mb-6 inline-block">
+            <p className="text-xs text-white/40 mb-1">Transaction ID</p>
+            <p className="text-sm font-mono text-emerald-400 font-semibold">{submittedTxnId}</p>
+          </div>
+          <button
+            onClick={() => { setShowDeposit(false); resetDepositForm(); }}
+            className="w-full px-4 py-3 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all text-sm font-semibold min-h-[44px]"
+          >
+            {t('payment.done')}
+          </button>
+        </div>
+      );
+    }
+
+    // Step 1: Select Amount
+    if (paymentStep === 1) {
+      return (
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            {presetAmounts.map((amt) => (
+              <button
+                key={amt}
+                type="button"
+                onClick={() => setDepositAmount(String(amt))}
+                className={`p-3 rounded-xl border text-sm font-semibold transition-all min-h-[52px] ${
+                  depositAmount === String(amt)
+                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 shadow-lg shadow-emerald-500/5'
+                    : 'bg-white/[0.03] text-white/60 border-white/10 hover:bg-white/[0.06] hover:border-white/20'
+                }`}
+              >
+                Rs. {amt.toLocaleString()}
+              </button>
+            ))}
+          </div>
+          <div>
+            <label className="block text-xs text-white/40 mb-1.5 font-medium">{t('payment.customAmount')}</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-white/30 font-medium">Rs.</span>
+              <input
+                type="number"
+                value={depositAmount}
+                onChange={(e) => setDepositAmount(e.target.value)}
+                placeholder="500"
+                className="glass-input w-full pl-12 pr-4 py-3 text-sm text-white placeholder:text-white/30"
+                min="500"
+                max="100000"
+                step="100"
+              />
+            </div>
+            <div className="flex justify-between mt-1.5">
+              <p className="text-[10px] text-white/30">{t('payment.minAmount')}</p>
+              <p className="text-[10px] text-white/30">{t('payment.maxAmount')}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const amt = parseFloat(depositAmount);
+              if (!amt || amt < 500) {
+                setDepositError(t('payment.minAmount'));
+                return;
+              }
+              setDepositError('');
+              setPaymentStep(2);
+            }}
+            className="w-full px-4 py-3 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all text-sm font-semibold min-h-[44px] flex items-center justify-center gap-2"
+          >
+            {t('common.next')}
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      );
+    }
+
+    // Step 2: Select Payment Method
+    if (paymentStep === 2) {
+      return (
+        <div className="space-y-3">
+          {paymentMethods.map((method) => {
+            const IconComp = method.icon;
+            return (
+              <button
+                key={method.id}
+                type="button"
+                onClick={() => { setSelectedMethod(method); setPaymentStep(3); setDepositError(''); }}
+                className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all text-left min-h-[60px] ${
+                  selectedMethod?.id === method.id
+                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                    : 'bg-white/[0.03] text-white/80 border-white/10 hover:bg-white/[0.06] hover:border-white/20'
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${method.color} flex items-center justify-center shrink-0`}>
+                  <IconComp className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold">{language === 'ur' ? method.nameUr : method.name}</p>
+                  <p className="text-xs text-white/40">{method.number || method.details?.bank}</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-white/30 shrink-0" />
+              </button>
+            );
+          })}
+        </div>
+      );
+    }
+
+    // Step 3: Payment Details
+    if (paymentStep === 3) {
+      if (!selectedMethod) return null;
+      const isWallet = ['jazzcash', 'easypaisa', 'sadapay'].includes(selectedMethod.id);
+
+      return (
+        <div className="space-y-4">
+          {/* Payment Instructions */}
+          <div className="glass-card p-4 bg-amber-500/5 border border-amber-500/20">
+            <div className="flex items-start gap-2">
+              <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-medium text-white/70 mb-2">{t('payment.depositInstructions')}</p>
+                {isWallet ? (
+                  <>
+                    <p className="text-xs text-white/50 mb-2">{t('payment.sendToAccount')}:</p>
+                    <div className="flex items-center gap-2 bg-white/[0.05] rounded-lg p-2.5">
+                      <p className="text-base font-mono font-bold text-white">{selectedMethod.number}</p>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyNumber(selectedMethod.number || '')}
+                        className="ml-auto flex items-center gap-1 px-2 py-1 rounded-md bg-white/10 hover:bg-white/20 text-xs text-white/60 transition-all shrink-0"
+                      >
+                        {copiedNumber ? <CheckCheck className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                        {copiedNumber ? t('payment.numberCopied') : t('payment.copyNumber')}
+                      </button>
+                    </div>
+                    <div className="mt-3 p-2.5 rounded-lg bg-white/[0.03] border border-white/5">
+                      <p className="text-xs text-white/40 font-medium mb-1">{t('payment.noBankAccount')}</p>
+                      <p className="text-[11px] text-white/30 leading-relaxed">{t('payment.visitShop')}</p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-white/60">{t('payment.bankDetails')}:</p>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-white/40">{t('payment.bankNameLabel')}</span>
+                        <span className="text-white font-medium">{selectedMethod.details?.bank}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-white/40">{t('payment.accountTitleLabel')}</span>
+                        <span className="text-white font-medium">{selectedMethod.details?.title}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-white/40">{t('payment.accountNumberLabel')}</span>
+                        <span className="text-white font-mono font-medium">{selectedMethod.details?.account}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Transaction Reference Input */}
+          <div>
+            <label className="block text-xs text-white/40 mb-1.5 font-medium">{t('payment.transactionRef')} <span className="text-red-400">*</span></label>
+            <input
+              type="text"
+              value={depositReference}
+              onChange={(e) => setDepositReference(e.target.value)}
+              placeholder={t('payment.referencePlaceholder')}
+              className="glass-input w-full px-4 py-3 text-sm text-white placeholder:text-white/30"
+            />
+          </div>
+
+          {/* Warning */}
+          <div className="p-3 rounded-xl bg-red-500/5 border border-red-500/20">
+            <div className="flex items-start gap-2">
+              <Shield className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+              <p className="text-[11px] text-white/50 leading-relaxed">{t('payment.depositWarning')}</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => { setPaymentStep(2); setDepositError(''); }}
+              className="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 transition-all text-sm font-medium min-h-[44px] flex items-center gap-1"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              {t('common.back')}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!depositReference.trim()) {
+                  setDepositError(t('payment.enterReference'));
+                  return;
+                }
+                setDepositError('');
+                setPaymentStep(4);
+              }}
+              className="flex-1 px-4 py-3 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all text-sm font-semibold min-h-[44px] flex items-center justify-center gap-2"
+            >
+              {t('common.next')}
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Step 4: Confirm
+    if (paymentStep === 4) {
+      return (
+        <div className="space-y-4">
+          <div className="text-center mb-2">
+            <p className="text-xs text-white/40 uppercase tracking-wider mb-1">{t('payment.step4Title')}</p>
+            <p className="text-2xl font-bold text-white">Rs. {parseFloat(depositAmount).toLocaleString()}</p>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between items-center p-3 rounded-xl bg-white/[0.03] border border-white/5">
+              <span className="text-xs text-white/40">{t('payment.summaryMethod')}</span>
+              <div className="flex items-center gap-2">
+                <div className={`w-6 h-6 rounded-md bg-gradient-to-br ${selectedMethod?.color} flex items-center justify-center`}>
+                  {selectedMethod && <selectedMethod.icon className="w-3.5 h-3.5 text-white" />}
+                </div>
+                <span className="text-sm font-medium text-white">{selectedMethod?.name}</span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center p-3 rounded-xl bg-white/[0.03] border border-white/5">
+              <span className="text-xs text-white/40">{t('payment.summaryReference')}</span>
+              <span className="text-sm font-mono text-white">{depositReference}</span>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
+            <div className="flex items-start gap-2">
+              <Shield className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-[11px] text-white/50 leading-relaxed">{t('payment.depositWarning')}</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => { setPaymentStep(3); setDepositError(''); }}
+              className="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 transition-all text-sm font-medium min-h-[44px] flex items-center gap-1"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              {t('common.back')}
+            </button>
+            <button
+              type="button"
+              onClick={handleDepositSubmit}
+              disabled={depositing}
+              className="flex-1 px-4 py-3 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 min-h-[44px]"
+            >
+              {depositing ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin" />
+                  {t('common.processing')}
+                </>
+              ) : (
+                <>
+                  <Banknote className="w-4 h-4" />
+                  {t('payment.confirmDeposit')}
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   if (loading) {
@@ -412,11 +707,7 @@ export default function WalletPage() {
           <p className="text-sm text-white/30">{t('wallet2.workerAccount')}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <button
-              onClick={() => {
-                setShowDeposit(true);
-                setDepositError('');
-                setDepositSuccess('');
-              }}
+              onClick={() => { setShowDeposit(true); resetDepositForm(); }}
               className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all text-sm font-semibold min-h-[44px]"
             >
               <TrendingUp className="w-4 h-4" />
@@ -576,91 +867,38 @@ export default function WalletPage() {
         )}
       </div>
 
-      {/* Deposit Modal */}
+      {/* Deposit Modal - Multi Step Wizard */}
       {showDeposit && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4">
           <div className="glass-card p-6 w-full max-w-md animate-fade-in border border-white/10 sm:my-0 max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-white">{t('wallet.depositTitle')}</h2>
-              <button onClick={() => setShowDeposit(false)} className="p-2.5 rounded-lg hover:bg-white/10 text-white/50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
+              <button
+                onClick={() => { setShowDeposit(false); resetDepositForm(); }}
+                className="p-2.5 rounded-lg hover:bg-white/10 text-white/50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-sm text-white/50 mb-4">{t('wallet.depositSubtitle')}</p>
-
-            {/* Warning banner */}
-            <div className="glass-card p-3 mb-4 bg-amber-500/5 border border-amber-500/20">
-              <div className="flex items-start gap-2">
-                <Shield className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <p className="text-xs text-white/60">{t('wallet2.noFakeDeposit')}</p>
+            {/* Step Indicators */}
+            {!depositSubmitted && paymentStep <= 4 && (
+              <div className="flex items-center gap-1 mb-5 overflow-x-auto pb-1">
+                {renderStepIndicator(1, t('payment.step1Title'))}
+                <div className="w-4 h-px bg-white/10 shrink-0" />
+                {renderStepIndicator(2, t('payment.step2Title'))}
+                <div className="w-4 h-px bg-white/10 shrink-0" />
+                {renderStepIndicator(3, t('payment.step3Title'))}
+                <div className="w-4 h-px bg-white/10 shrink-0" />
+                {renderStepIndicator(4, t('payment.step4Title'))}
               </div>
-            </div>
+            )}
 
-            <form onSubmit={handleDeposit} className="space-y-4">
-              {/* Amount */}
-              <div>
-                <label className="block text-xs text-white/40 mb-1.5 font-medium">{t('wallet.amount')}</label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-white/30 font-medium">₨</span>
-                  <input type="number" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} placeholder={t('wallet.amountPlaceholder')} className="glass-input w-full pl-10 pr-4 py-3 text-sm text-white placeholder:text-white/30" min="500" max="100000" step="100" />
-                </div>
-                <p className="text-xs text-white/30 mt-1">{t('wallet.minDeposit')}</p>
-              </div>
+            {depositError && (
+              <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">{depositError}</p>
+            )}
 
-              {/* Deposit Method */}
-              <div>
-                <label className="block text-xs text-white/40 mb-1.5 font-medium">{t('wallet2.depositMethod')}</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {['jazzcash', 'easypaisa', 'bank_transfer'].map((method) => (
-                    <button
-                      key={method}
-                      type="button"
-                      onClick={() => setDepositMethod(method)}
-                      className={`p-3 rounded-xl border text-xs font-medium transition-all text-center min-h-[44px] ${
-                        depositMethod === method
-                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                          : 'bg-white/3 text-white/50 border-white/10 hover:bg-white/5'
-                      }`}
-                    >
-                      {t(`wallet2.${method === 'jazzcash' ? 'jazzcash' : method === 'easypaisa' ? 'easypaisa' : 'bankTransfer'}`)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Account Number */}
-              <div>
-                <label className="block text-xs text-white/40 mb-1.5 font-medium">{t('wallet2.accountOrPhoneNumber')}</label>
-                <input type="text" value={depositAccount} onChange={(e) => setDepositAccount(e.target.value)} placeholder={t('wallet2.enterAccountOrPhone')} className="glass-input w-full px-4 py-3 text-sm text-white placeholder:text-white/30" />
-              </div>
-
-              {/* Transaction ID (optional) */}
-              <div>
-                <label className="block text-xs text-white/40 mb-1.5 font-medium">{t('wallet2.transactionId')}</label>
-                <input type="text" value={depositTxId} onChange={(e) => setDepositTxId(e.target.value)} placeholder={t('wallet2.enterTransactionId')} className="glass-input w-full px-4 py-3 text-sm text-white placeholder:text-white/30" />
-              </div>
-
-              {depositError && (
-                <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3">{depositError}</p>
-              )}
-              {depositSuccess && (
-                <p className="text-sm text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">{depositSuccess}</p>
-              )}
-
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowDeposit(false)} className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 transition-all text-sm font-medium min-h-[44px]">
-                  {t('common.cancel')}
-                </button>
-                <button type="submit" disabled={depositing} className="flex-1 px-4 py-3 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 min-h-[44px]">
-                  {depositing ? (
-                    <><div className="w-4 h-4 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin" />{t('wallet2.processingDeposit')}</>
-                  ) : (
-                    <><Banknote className="w-4 h-4" />{t('wallet.addFunds')}</>
-                  )}
-                </button>
-              </div>
-            </form>
+            {renderDepositStep()}
           </div>
         </div>
       )}
@@ -685,13 +923,13 @@ export default function WalletPage() {
                   {t('worker.availableBalance')}: {formatCurrency(walletData.balance)}
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-white/30 font-medium">₨</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-white/30 font-medium">Rs.</span>
                   <input
                     type="number"
                     value={withdrawForm.amount}
                     onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value })}
-                    placeholder="Amount (PKR)"
-                    className="glass-input w-full pl-10 pr-4 py-3 text-sm text-white placeholder:text-white/30"
+                    placeholder="Amount"
+                    className="glass-input w-full pl-12 pr-4 py-3 text-sm text-white placeholder:text-white/30"
                     min="1"
                     max={walletData.balance}
                     step="0.01"

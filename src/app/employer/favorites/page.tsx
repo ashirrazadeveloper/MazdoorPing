@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import type { SavedWorker, Worker } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 interface SavedWorkerWithDetails extends SavedWorker {
   worker?: Worker;
@@ -23,6 +24,7 @@ interface SavedWorkerWithDetails extends SavedWorker {
 
 export default function FavoritesPage() {
   const { employerProfile } = useAuthStore();
+  const { t } = useLanguageStore();
   const [savedWorkers, setSavedWorkers] = useState<SavedWorkerWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState<string | null>(null);

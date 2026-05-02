@@ -57,6 +57,7 @@ function formatCnic(value: string): string {
 function buildFormData(profile: { full_name?: string | null; phone?: string | null } | null, worker: {
   bio?: string | null; city?: string | null; province?: string | null; address?: string | null;
   hourly_rate?: number | null; gender?: string | null; date_of_birth?: string | null;
+  latitude?: number | null; longitude?: number | null;
 } | null): FormData {
   return {
     fullName: profile?.full_name || '',
