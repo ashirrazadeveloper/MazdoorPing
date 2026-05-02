@@ -20,8 +20,8 @@ export function BottomNav({ items, accentColor }: BottomNavProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 glass-sidebar border-t border-white/5 z-50 lg:hidden safe-area-bottom">
-      <div className="flex items-center justify-around px-2 py-1">
+    <nav className="fixed bottom-0 left-0 right-0 glass-sidebar border-t border-white/5 z-50 lg:hidden">
+      <div className="flex items-center justify-around px-1 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
         {items.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -29,14 +29,14 @@ export function BottomNav({ items, accentColor }: BottomNavProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all duration-200 min-w-[64px]',
+                'flex flex-col items-center gap-0.5 px-2 py-2 rounded-xl transition-all duration-200 min-w-[56px] min-h-[48px] justify-center',
                 isActive
                   ? `text-${accentColor}-400`
                   : 'text-white/40'
               )}
             >
               <item.icon className={cn('w-5 h-5', isActive && `text-${accentColor}-400`)} />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <span className="text-[10px] font-medium leading-tight">{item.label}</span>
             </Link>
           );
         })}

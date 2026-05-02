@@ -45,7 +45,7 @@ export function Sidebar({ items, accentColor, title, isOpen, onClose }: SidebarP
                 <p className="text-xs text-white/40 capitalize">{title}</p>
               </div>
             </Link>
-            <button onClick={onClose} className="lg:hidden p-1 rounded-lg hover:bg-white/10 text-white/50">
+            <button onClick={onClose} className="lg:hidden p-2 rounded-lg hover:bg-white/10 text-white/50 min-w-[44px] min-h-[44px] flex items-center justify-center" aria-label="Close menu">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -86,7 +86,7 @@ export function Sidebar({ items, accentColor, title, isOpen, onClose }: SidebarP
           </div>
           <button
             onClick={signOut}
-            className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-all"
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-all min-h-[44px]"
           >
             <LogOut className="w-4 h-4" />
             Sign Out

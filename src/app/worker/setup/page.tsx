@@ -28,6 +28,9 @@ import {
   ToggleRight,
   Eye,
   EyeOff,
+  Building2,
+  CreditCard,
+  Wallet,
 } from 'lucide-react';
 
 const MapPicker = dynamic(() => import('@/components/shared/MapPicker'), { ssr: false });
@@ -67,7 +70,12 @@ const STEPS = [
   { id: 2, label: 'CNIC Verification', icon: ShieldCheck },
   { id: 3, label: 'Skills & Experience', icon: Wrench },
   { id: 4, label: 'Location', icon: MapPin },
-  { id: 5, label: 'Review & Submit', icon: ClipboardCheck },
+  { id: 5, label: 'Bank Details', icon: Wallet },
+  { id: 6, label: 'Review & Submit', icon: ClipboardCheck },
+];
+
+const BANK_OPTIONS = [
+  'HBL', 'Meezan Bank', 'UBL', 'Alfalah', 'JazzCash', 'EasyPaisa', 'Other'
 ];
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
@@ -100,7 +108,11 @@ interface SetupFormData {
   // Step 4
   latitude: number | null;
   longitude: number | null;
-  // Step 5
+  // Step 5 - Bank Details
+  bankName: string;
+  accountNumber: string;
+  accountTitle: string;
+  // Step 6
   termsAccepted: boolean;
 }
 
@@ -129,6 +141,9 @@ function createDefaultForm(profile: { full_name?: string | null; phone?: string 
     availability: true,
     latitude: null,
     longitude: null,
+    bankName: '',
+    accountNumber: '',
+    accountTitle: '',
     termsAccepted: false,
   };
 }
@@ -332,6 +347,10 @@ export default function WorkerSetupPage() {
     if (workerProfile.latitude) updates.latitude = workerProfile.latitude;
     if (workerProfile.longitude) updates.longitude = workerProfile.longitude;
     if (typeof workerProfile.availability === 'boolean') updates.availability = workerProfile.availability;
+    // Load bank details
+    if (workerProfile.bank_name) updates.bankName = workerProfile.bank_name;
+    if (workerProfile.account_number) updates.accountNumber = workerProfile.account_number;
+    if (workerProfile.account_title) updates.accountTitle = workerProfile.account_title;
 
     // Load skills
     if (workerProfile.skills && workerProfile.skills.length > 0) {
@@ -555,7 +574,6 @@ export default function WorkerSetupPage() {
     if (!workerProfile?.user_id) return false;
     setSaving(true);
     try {
-      // Skip location save if no location selected
       if (!formData.latitude || !formData.longitude) {
         setMessage({ type: 'success', text: 'Location step skipped (no location selected).' });
         setSaving(false);
@@ -571,7 +589,6 @@ export default function WorkerSetupPage() {
         .eq('user_id', workerProfile.user_id);
 
       if (error) {
-        // If columns don't exist yet, don't block - location will work after migration
         console.warn('Location save warning (run migration to add lat/lng columns):', error.message);
         setMessage({ type: 'success', text: 'Profile saved! (Location columns pending migration)' });
         setSaving(false);
@@ -580,6 +597,39 @@ export default function WorkerSetupPage() {
 
       await fetchProfiles();
       setMessage({ type: 'success', text: 'Location saved!' });
+      setSaving(false);
+      return true;
+    } catch {
+      setMessage({ type: 'error', text: 'Failed to save. Please try again.' });
+      setSaving(false);
+      return false;
+    }
+  }, [formData, workerProfile, fetchProfiles]);
+
+  // Save step 5 - Bank Details
+  const saveStep5 = useCallback(async () => {
+    if (!workerProfile?.user_id) return false;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('workers')
+        .update({
+          bank_name: formData.bankName.trim(),
+          account_number: formData.accountNumber.trim(),
+          account_title: formData.accountTitle.trim(),
+        })
+        .eq('user_id', workerProfile.user_id);
+
+      if (error) {
+        // If columns don't exist, don't block
+        console.warn('Bank details save warning:', error.message);
+        setMessage({ type: 'success', text: 'Profile saved! (Bank columns pending migration)' });
+        setSaving(false);
+        return true;
+      }
+
+      await fetchProfiles();
+      setMessage({ type: 'success', text: 'Bank details saved!' });
       setSaving(false);
       return true;
     } catch {
@@ -604,6 +654,8 @@ export default function WorkerSetupPage() {
       case 4:
         return true;
       case 5:
+        return true;
+      case 6:
         if (!formData.termsAccepted) { setMessage({ type: 'error', text: 'Please accept the Terms & Conditions' }); return false; }
         return true;
       default:
@@ -620,9 +672,10 @@ export default function WorkerSetupPage() {
     else if (currentStep === 2) success = await saveStep2();
     else if (currentStep === 3) success = await saveStep3();
     else if (currentStep === 4) success = await saveStep4();
+    else if (currentStep === 5) success = await saveStep5();
 
     if (success) {
-      setCurrentStep((s) => Math.min(s + 1, 5));
+      setCurrentStep((s) => Math.min(s + 1, 6));
       setMessage(null);
     }
   }, [currentStep, validateStep, saveStep1, saveStep2, saveStep3, saveStep4]);
@@ -630,7 +683,7 @@ export default function WorkerSetupPage() {
   // Skip handler
   const handleSkip = useCallback(() => {
     if (currentStep === 1) return; // Cannot skip step 1
-    setCurrentStep((s) => Math.min(s + 1, 5));
+    setCurrentStep((s) => Math.min(s + 1, 6));
     setMessage(null);
   }, [currentStep]);
 
@@ -747,13 +800,13 @@ export default function WorkerSetupPage() {
         {/* Mobile Progress */}
         <div className="md:hidden">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-emerald-400">Step {currentStep} of 5</span>
+            <span className="text-sm font-medium text-emerald-400">Step {currentStep} of 6</span>
             <span className="text-xs text-white/40">{STEPS[currentStep - 1].label}</span>
           </div>
           <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
             <div
               className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
-              style={{ width: `${(currentStep / 5) * 100}%` }}
+              style={{ width: `${(currentStep / 6) * 100}%` }}
             />
           </div>
         </div>
@@ -1200,8 +1253,71 @@ export default function WorkerSetupPage() {
             </div>
           )}
 
-          {/* ─── Step 5: Review & Submit ────────────────────────────────────── */}
+          {/* ─── Step 5: Bank Details ──────────────────────────────────────── */}
           {currentStep === 5 && (
+            <div className="space-y-6">
+              <div className="text-center mb-6">
+                <div className="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto mb-4">
+                  <Wallet className="w-8 h-8 text-blue-400" />
+                </div>
+                <h2 className="text-xl font-bold text-white">Bank Details</h2>
+                <p className="text-white/40 text-sm mt-1">Add your bank account for receiving payments</p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                <div className="flex gap-3">
+                  <Building2 className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
+                  <div className="text-sm text-white/60 space-y-1">
+                    <p>• Your bank details are used for withdrawal payments</p>
+                    <p>• You can update these details anytime from your wallet page</p>
+                    <p>• JazzCash and EasyPaisa are also supported</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-2">Bank Name</label>
+                <select
+                  value={formData.bankName}
+                  onChange={(e) => updateForm({ bankName: e.target.value })}
+                  className="glass-input w-full px-4 py-3 text-white appearance-none cursor-pointer"
+                >
+                  <option value="" className="bg-gray-900">Select bank</option>
+                  {BANK_OPTIONS.map((b) => (
+                    <option key={b} value={b} className="bg-gray-900">{b}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-2">Account Number</label>
+                <div className="relative">
+                  <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                  <input
+                    type="text"
+                    value={formData.accountNumber}
+                    onChange={(e) => updateForm({ accountNumber: e.target.value })}
+                    placeholder="Enter your account number"
+                    className="glass-input w-full pl-10 pr-4 py-3 text-white placeholder:text-white/30"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white/70 mb-2">Account Title</label>
+                <input
+                  type="text"
+                  value={formData.accountTitle}
+                  onChange={(e) => updateForm({ accountTitle: e.target.value })}
+                  placeholder="Account holder name as per bank"
+                  className="glass-input w-full px-4 py-3 text-white placeholder:text-white/30"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* ─── Step 6: Review & Submit ────────────────────────────────────── */}
+          {currentStep === 6 && (
             <div className="space-y-6">
               <div className="text-center mb-6">
                 <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-4">
@@ -1364,6 +1480,41 @@ export default function WorkerSetupPage() {
                 </div>
               </div>
 
+              {/* Bank Details Summary */}
+              <div className="p-4 rounded-xl bg-white/3 border border-white/5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Wallet className="w-4 h-4 text-blue-400" />
+                    <h3 className="text-sm font-semibold text-white/80">Bank Details</h3>
+                  </div>
+                  <button
+                    onClick={() => goToStep(5)}
+                    className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+                  >
+                    <Edit3 className="w-3 h-3" />
+                    Edit
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-white/30">Bank</span>
+                    <p className="text-white/70">{formData.bankName || '—'}</p>
+                  </div>
+                  <div>
+                    <span className="text-white/30">Account #</span>
+                    <p className="text-white/70 font-mono">{formData.accountNumber || '—'}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-white/30">Account Title</span>
+                    <p className="text-white/70">{formData.accountTitle || '—'}</p>
+                  </div>
+                </div>
+                <div className={`flex items-center gap-1.5 text-xs ${formData.bankName ? 'text-emerald-400' : 'text-yellow-400'}`}>
+                  {formData.bankName ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                  {formData.bankName ? 'Complete' : 'Incomplete — needed for withdrawals'}
+                </div>
+              </div>
+
               {/* Terms & Conditions */}
               <div className="p-4 rounded-xl bg-yellow-500/5 border border-yellow-500/10">
                 <label className="flex items-start gap-3 cursor-pointer">
@@ -1403,16 +1554,16 @@ export default function WorkerSetupPage() {
           </button>
 
           <div className="flex items-center gap-3">
-            {currentStep > 1 && currentStep < 5 && (
+            {currentStep > 1 && currentStep < 6 && (
               <button
                 onClick={handleSkip}
-                className="px-5 py-2.5 rounded-xl text-white/40 hover:text-white/60 hover:bg-white/5 transition-all text-sm font-medium"
+                className="px-5 py-2.5 rounded-xl text-white/40 hover:text-white/60 hover:bg-white/5 transition-all text-sm font-medium min-h-[44px]"
               >
                 Skip for now
               </button>
             )}
 
-            {currentStep < 5 ? (
+            {currentStep < 6 ? (
               <button
                 onClick={handleNext}
                 disabled={saving}

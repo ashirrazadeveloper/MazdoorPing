@@ -29,18 +29,18 @@ const iconBgMap = {
 
 export function StatCard({ title, value, icon, color, change, changeType }: StatCardProps) {
   return (
-    <div className={`glass-card p-6 bg-gradient-to-br ${colorMap[color]} relative overflow-hidden`}>
+    <div className={`glass-card p-4 lg:p-6 bg-gradient-to-br ${colorMap[color]} relative overflow-hidden`}>
       <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-white/50 uppercase tracking-wider">{title}</p>
-          <p className="text-3xl font-bold text-white">{value}</p>
+        <div className="space-y-1 lg:space-y-2 min-w-0">
+          <p className="text-xs lg:text-sm font-medium text-white/50 uppercase tracking-wider">{title}</p>
+          <p className="text-xl lg:text-3xl font-bold text-white truncate">{value}</p>
           {change && (
             <p className={`text-xs font-medium ${changeType === 'up' ? 'text-emerald-400' : 'text-red-400'}`}>
               {changeType === 'up' ? '↑' : '↓'} {change}
             </p>
           )}
         </div>
-        <div className={`p-3 rounded-xl ${iconBgMap[color]}`}>
+        <div className={`p-2 lg:p-3 rounded-xl shrink-0 ${iconBgMap[color]}`}>
           {icon}
         </div>
       </div>

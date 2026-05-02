@@ -42,6 +42,9 @@ export interface Worker {
   longitude: number | null;
   created_at: string;
   updated_at: string;
+  bank_name: string;
+  account_number: string;
+  account_title: string;
   profile?: Profile;
   skills?: WorkerSkill[];
 }

@@ -20,7 +20,7 @@ const bottomNavItems = [
   { label: 'Jobs', href: '/worker/jobs', icon: Briefcase },
   { label: 'My Jobs', href: '/worker/my-jobs', icon: ClipboardList },
   { label: 'Wallet', href: '/worker/wallet', icon: Wallet },
-  { label: 'Profile', href: '/worker/profile', icon: User },
+  { label: 'Alerts', href: '/worker/notifications', icon: Bell },
 ];
 
 export default function WorkerLayout({ children }: { children: React.ReactNode }) {

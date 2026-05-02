@@ -293,3 +293,25 @@ body {
   background: none !important;
   border: none !important;
 }
+
+/* RTL Urdu font support */
+[dir="rtl"] {
+  font-family: 'Noto Nastaliq Urdu', 'Inter', system-ui, sans-serif;
+}
+
+[dir="rtl"] .font-mono,
+[dir="rtl"] .glass-input[placeholder] {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Safe area padding for iOS */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Responsive touch targets */
+@media (max-width: 640px) {
+  button, [role="button"], a {
+    min-height: 40px;
+  }
+}

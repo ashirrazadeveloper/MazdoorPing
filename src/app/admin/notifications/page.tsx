@@ -2,18 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth-store';
+import { useLanguageStore } from '@/store/language-store';
 import { supabase } from '@/lib/supabase';
 import { NotificationItem } from '@/components/shared/NotificationItem';
 import { BellOff, CheckCheck, Loader2 } from 'lucide-react';
 import type { Notification } from '@/types';
 
-export default function NotificationsPage() {
+export default function AdminNotificationsPage() {
   const { profile } = useAuthStore();
+  const { t } = useLanguageStore();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
 
-  // Fetch notifications on mount and when profile changes
   useEffect(() => {
     if (!profile) return;
 
@@ -23,8 +24,8 @@ export default function NotificationsPage() {
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', profile.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(100);
 
       if (!cancelled) {
         if (error) {
@@ -39,23 +40,19 @@ export default function NotificationsPage() {
     return () => { cancelled = true; };
   }, [profile]);
 
-  // Real-time subscription for new notifications
   useEffect(() => {
-    if (!profile?.id) return;
-
     const channel = supabase
-      .channel('notifications-realtime')
+      .channel('admin-notifications-realtime')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'notifications',
-          filter: `user_id=eq.${profile.id}`,
         },
         (payload) => {
           const newNotification = payload.new as Notification;
-          setNotifications((prev) => [newNotification, ...prev]);
+          setNotifications((prev) => [newNotification, ...prev].slice(0, 100));
         }
       )
       .subscribe();
@@ -63,22 +60,17 @@ export default function NotificationsPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile?.id]);
+  }, []);
 
   const handleMarkRead = async (notificationId: string) => {
     const notification = notifications.find((n) => n.id === notificationId);
     if (!notification || notification.is_read) return;
 
     try {
-      const { error } = await supabase
+      await supabase
         .from('notifications')
         .update({ is_read: true })
         .eq('id', notificationId);
-
-      if (error) {
-        console.error('Error marking notification as read:', error);
-        return;
-      }
 
       setNotifications((prev) =>
         prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n))
@@ -95,15 +87,10 @@ export default function NotificationsPage() {
     setMarkingAll(true);
 
     try {
-      const { error } = await supabase
+      await supabase
         .from('notifications')
         .update({ is_read: true })
         .in('id', unreadIds);
-
-      if (error) {
-        console.error('Error marking all as read:', error);
-        return;
-      }
 
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     } catch (err) {
@@ -146,25 +133,36 @@ export default function NotificationsPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-white">Notifications</h1>
-          <p className="text-white/50 mt-1">
-            {unreadCount > 0
-              ? `You have ${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`
-              : 'You are all caught up'}
-          </p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-white">{t('admin.notifications')}</h1>
+          <p className="text-white/50 mt-1">{t('admin.notificationsSubtitle')}</p>
         </div>
         {unreadCount > 0 && (
           <button
             onClick={handleMarkAllRead}
             disabled={markingAll}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 hover:text-white transition-all text-sm font-medium disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 hover:text-white transition-all text-sm font-medium disabled:opacity-50 min-h-[44px]"
           >
             {markingAll ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCheck className="w-4 h-4" />}
-            {markingAll ? 'Marking...' : 'Mark all as read'}
+            {markingAll ? t('common.processing') : 'Mark all as read'}
           </button>
         )}
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="glass-card p-4 text-center">
+          <p className="text-2xl font-bold text-white">{notifications.length}</p>
+          <p className="text-xs text-white/40 mt-1">Total</p>
+        </div>
+        <div className="glass-card p-4 text-center">
+          <p className="text-2xl font-bold text-orange-400">{unreadCount}</p>
+          <p className="text-xs text-white/40 mt-1">Unread</p>
+        </div>
+        <div className="glass-card p-4 text-center hidden sm:block">
+          <p className="text-2xl font-bold text-emerald-400">{notifications.length - unreadCount}</p>
+          <p className="text-xs text-white/40 mt-1">Read</p>
+        </div>
       </div>
 
       <div className="glass-card overflow-hidden">
@@ -175,12 +173,11 @@ export default function NotificationsPage() {
             </div>
             <h3 className="text-lg font-semibold text-white mb-2">No notifications</h3>
             <p className="text-white/40 text-sm max-w-md">
-              When employers respond to your bids, jobs get updated, or payments are processed,
-              you will see notifications here.
+              Platform notifications will appear here.
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-white/5 max-h-[calc(100vh-280px)] overflow-y-auto custom-scrollbar">
+          <div className="divide-y divide-white/5 max-h-[calc(100vh-320px)] overflow-y-auto custom-scrollbar">
             {notifications.map((notification) => (
               <NotificationItem
                 key={notification.id}

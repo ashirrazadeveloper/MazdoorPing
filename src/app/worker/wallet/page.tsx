@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/auth-store';
+import { useLanguageStore } from '@/store/language-store';
 import { supabase } from '@/lib/supabase';
 import { formatCurrency, formatDate, getStatusColor } from '@/lib/utils';
 import { StatCard } from '@/components/shared/StatCard';
@@ -18,11 +19,22 @@ import {
   Building,
   CreditCard,
   User,
+  Info,
+  Shield,
+  Edit3,
+  Save,
+  Percent,
+  Check,
 } from 'lucide-react';
-import type { Transaction } from '@/types';
+import type { Transaction, Settings } from '@/types';
+
+const BANK_OPTIONS = [
+  'HBL', 'Meezan Bank', 'UBL', 'Alfalah', 'JazzCash', 'EasyPaisa', 'Other'
+];
 
 export default function WalletPage() {
   const { workerProfile } = useAuthStore();
+  const { t, language } = useLanguageStore();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWithdraw, setShowWithdraw] = useState(false);
@@ -36,10 +48,25 @@ export default function WalletPage() {
   const [withdrawError, setWithdrawError] = useState('');
   const [withdrawSuccess, setWithdrawSuccess] = useState('');
 
+  // Bank details
+  const [showBankForm, setShowBankForm] = useState(false);
+  const [bankForm, setBankForm] = useState({
+    bankName: '',
+    accountNumber: '',
+    accountTitle: '',
+  });
+  const [savingBank, setSavingBank] = useState(false);
+  const [bankError, setBankError] = useState('');
+  const [bankSuccess, setBankSuccess] = useState('');
+
+  // Commission
+  const [commission, setCommission] = useState(10);
+
   const [walletData, setWalletData] = useState({
     balance: 0,
     totalEarned: 0,
     pending: 0,
+    totalCommission: 0,
   });
 
   useEffect(() => {
@@ -59,26 +86,122 @@ export default function WalletPage() {
       const txns = (transactionsData || []) as Transaction[];
       setTransactions(txns);
 
-      const credits = txns.filter((t) => t.type === 'credit');
-      const completedCredits = credits.filter((t) => t.status === 'completed');
-      const pendingCredits = credits.filter((t) => t.status === 'pending');
-      const debits = txns.filter((t) => t.type === 'debit' && t.status === 'completed');
+      const credits = txns.filter((tr) => tr.type === 'credit');
+      const completedCredits = credits.filter((tr) => tr.status === 'completed');
+      const pendingCredits = credits.filter((tr) => tr.status === 'pending');
+      const debits = txns.filter((tr) => tr.type === 'debit' && tr.status === 'completed');
 
-      const totalEarned = completedCredits.reduce((sum, t) => sum + t.amount, 0);
-      const pending = pendingCredits.reduce((sum, t) => sum + t.amount, 0);
-      const totalDebited = debits.reduce((sum, t) => sum + t.amount, 0);
+      // Commission debits (description contains 'commission')
+      const commissionDebits = debits.filter((d) =>
+        d.description.toLowerCase().includes('commission') ||
+        d.description.toLowerCase().includes('platform')
+      );
+      const totalCommission = commissionDebits.reduce((sum, d) => sum + d.amount, 0);
+
+      const totalEarned = completedCredits.reduce((sum, tr) => sum + tr.amount, 0);
+      const pending = pendingCredits.reduce((sum, tr) => sum + tr.amount, 0);
+      const totalDebited = debits.reduce((sum, tr) => sum + tr.amount, 0);
       const balance = totalEarned - totalDebited;
 
       setWalletData({
         balance: Math.max(0, balance),
         totalEarned,
         pending,
+        totalCommission,
       });
       setLoading(false);
     })();
 
+    // Load bank details from worker profile
+    if (workerProfile.bank_name || workerProfile.account_number) {
+      setBankForm({
+        bankName: workerProfile.bank_name || '',
+        accountNumber: workerProfile.account_number || '',
+        accountTitle: workerProfile.account_title || '',
+      });
+    }
+
+    // Also load bank details into withdraw form
+    setWithdrawForm({
+      amount: '',
+      bankName: workerProfile.bank_name || '',
+      accountNumber: workerProfile.account_number || '',
+      accountTitle: workerProfile.account_title || '',
+    });
+
     return () => { cancelled = true; };
   }, [workerProfile]);
+
+  // Fetch platform commission
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('key', 'platform_commission')
+        .single();
+      if (data) {
+        setCommission(parseFloat(data.value) || 10);
+      }
+    })();
+  }, []);
+
+  const maskAccountNumber = (num: string) => {
+    if (num.length <= 4) return '••••••••';
+    return '••••' + num.slice(-4);
+  };
+
+  const handleSaveBankDetails = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBankError('');
+    setBankSuccess('');
+
+    if (!bankForm.bankName.trim()) {
+      setBankError(language === 'ur' ? 'براہ کرم بینک کا نام درج کریں' : 'Please enter your bank name.');
+      return;
+    }
+    if (!bankForm.accountNumber.trim()) {
+      setBankError(language === 'ur' ? 'براہ کرم اکاؤنٹ نمبر درج کریں' : 'Please enter your account number.');
+      return;
+    }
+    if (!bankForm.accountTitle.trim()) {
+      setBankError(language === 'ur' ? 'براہ کرم اکاؤنٹ ہولڈر کا نام درج کریں' : 'Please enter the account holder name.');
+      return;
+    }
+
+    setSavingBank(true);
+    try {
+      const { error } = await supabase
+        .from('workers')
+        .update({
+          bank_name: bankForm.bankName.trim(),
+          account_number: bankForm.accountNumber.trim(),
+          account_title: bankForm.accountTitle.trim(),
+        })
+        .eq('user_id', workerProfile?.user_id);
+
+      if (error) {
+        setBankError(error.message);
+        return;
+      }
+
+      setBankSuccess(t('worker.bankDetailsSaved'));
+      setShowBankForm(false);
+      setWithdrawForm({
+        amount: '',
+        bankName: bankForm.bankName.trim(),
+        accountNumber: bankForm.accountNumber.trim(),
+        accountTitle: bankForm.accountTitle.trim(),
+      });
+
+      // Refresh worker profile
+      useAuthStore.getState().fetchProfiles();
+    } catch {
+      setBankError(t('common.failed'));
+    } finally {
+      setSavingBank(false);
+    }
+  };
 
   const handleWithdraw = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,23 +210,23 @@ export default function WalletPage() {
 
     const amount = parseFloat(withdrawForm.amount);
     if (!amount || amount <= 0) {
-      setWithdrawError('Please enter a valid amount.');
+      setWithdrawError(language === 'ur' ? 'براہ کرم درست رقم درج کریں' : 'Please enter a valid amount.');
       return;
     }
     if (amount > walletData.balance) {
-      setWithdrawError('Insufficient balance.');
+      setWithdrawError(t('worker.insufficientBalance'));
       return;
     }
     if (!withdrawForm.bankName.trim()) {
-      setWithdrawError('Please enter your bank name.');
+      setWithdrawError(t('worker.enterBankName'));
       return;
     }
     if (!withdrawForm.accountNumber.trim()) {
-      setWithdrawError('Please enter your account number.');
+      setWithdrawError(t('worker.enterAccountNumber'));
       return;
     }
     if (!withdrawForm.accountTitle.trim()) {
-      setWithdrawError('Please enter the account holder name.');
+      setWithdrawError(t('worker.enterAccountTitle'));
       return;
     }
 
@@ -124,8 +247,8 @@ export default function WalletPage() {
         return;
       }
 
-      setWithdrawSuccess('Withdrawal request submitted successfully!');
-      setWithdrawForm({ amount: '', bankName: '', accountNumber: '', accountTitle: '' });
+      setWithdrawSuccess(t('worker.withdrawalSubmitted'));
+      setWithdrawForm({ ...withdrawForm, amount: '' });
       setShowWithdraw(false);
 
       // Refresh wallet data
@@ -138,22 +261,20 @@ export default function WalletPage() {
       const txns = (transactionsData || []) as Transaction[];
       setTransactions(txns);
 
-      const credits = txns.filter((t) => t.type === 'credit');
-      const completedCredits = credits.filter((t) => t.status === 'completed');
-      const pendingCredits = credits.filter((t) => t.status === 'pending');
-      const debits = txns.filter((t) => t.type === 'debit' && t.status === 'completed');
-
-      const totalEarned = completedCredits.reduce((sum, t) => sum + t.amount, 0);
-      const pending = pendingCredits.reduce((sum, t) => sum + t.amount, 0);
-      const totalDebited = debits.reduce((sum, t) => sum + t.amount, 0);
+      const credits = txns.filter((tr) => tr.type === 'credit');
+      const completedCredits = credits.filter((tr) => tr.status === 'completed');
+      const debits = txns.filter((tr) => tr.type === 'debit' && tr.status === 'completed');
+      const totalEarned = completedCredits.reduce((sum, tr) => sum + tr.amount, 0);
+      const totalDebited = debits.reduce((sum, tr) => sum + tr.amount, 0);
 
       setWalletData({
         balance: Math.max(0, totalEarned - totalDebited),
         totalEarned,
-        pending,
+        pending: txns.filter((tr) => tr.type === 'credit' && tr.status === 'pending').reduce((s, tr) => s + tr.amount, 0),
+        totalCommission: walletData.totalCommission,
       });
     } catch {
-      setWithdrawError('Failed to process withdrawal. Please try again.');
+      setWithdrawError(t('common.failed'));
     } finally {
       setWithdrawing(false);
     }
@@ -166,27 +287,13 @@ export default function WalletPage() {
           <div className="skeleton h-4 w-24 mb-3" />
           <div className="skeleton h-10 w-40" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[...Array(3)].map((_, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
             <div key={i} className="glass-card p-6">
               <div className="skeleton h-4 w-24 mb-3" />
               <div className="skeleton h-8 w-20" />
             </div>
           ))}
-        </div>
-        <div className="glass-card p-6">
-          <div className="skeleton h-5 w-40 mb-4" />
-          <div className="space-y-3">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="flex items-center gap-4">
-                <div className="skeleton h-10 w-10 rounded-lg" />
-                <div className="flex-1">
-                  <div className="skeleton h-4 w-48 mb-2" />
-                  <div className="skeleton h-3 w-24" />
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
     );
@@ -195,17 +302,29 @@ export default function WalletPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-white">Wallet</h1>
-        <p className="text-white/50 mt-1">Manage your earnings and withdrawals</p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-white">{t('worker.walletTitle')}</h1>
+        <p className="text-white/50 mt-1 text-sm lg:text-base">{t('worker.walletSubtitle')}</p>
+      </div>
+
+      {/* Deposit Safety Banner */}
+      <div className="glass-card p-4 border-emerald-500/20 bg-emerald-500/5">
+        <div className="flex items-start gap-3">
+          <Shield className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm text-white/70 font-medium">
+              {language === 'ur' ? t('worker.depositBannerUr') : t('worker.depositBannerEn')}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Balance Card */}
-      <div className="glass-card p-8 relative overflow-hidden">
+      <div className="glass-card p-6 lg:p-8 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/3 rounded-full translate-y-1/2 -translate-x-1/2" />
         <div className="relative z-10">
-          <p className="text-sm font-medium text-white/50 uppercase tracking-wider mb-2">Available Balance</p>
-          <p className="text-4xl lg:text-5xl font-bold text-white mb-1">
+          <p className="text-sm font-medium text-white/50 uppercase tracking-wider mb-2">{t('worker.availableBalance')}</p>
+          <p className="text-3xl lg:text-5xl font-bold text-white mb-1">
             {formatCurrency(walletData.balance)}
           </p>
           <p className="text-sm text-white/30">MazdoorPing Worker Account</p>
@@ -214,46 +333,164 @@ export default function WalletPage() {
               setShowWithdraw(true);
               setWithdrawError('');
               setWithdrawSuccess('');
+              // Pre-fill from saved bank details
+              setWithdrawForm({
+                amount: '',
+                bankName: bankForm.bankName || workerProfile?.bank_name || '',
+                accountNumber: bankForm.accountNumber || workerProfile?.account_number || '',
+                accountTitle: bankForm.accountTitle || workerProfile?.account_title || '',
+              });
             }}
-            className="mt-6 flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all text-sm font-semibold"
+            className="mt-6 flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all text-sm font-semibold min-h-[44px]"
           >
             <ArrowDownToLine className="w-4 h-4" />
-            Withdraw Funds
+            {t('worker.withdrawFunds')}
           </button>
         </div>
       </div>
 
       {/* Wallet Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
         <StatCard
-          title="Total Earned"
+          title={t('worker.totalEarned')}
           value={formatCurrency(walletData.totalEarned)}
-          icon={<TrendingUp className="w-6 h-6" />}
+          icon={<TrendingUp className="w-5 h-5 lg:w-6 lg:h-6" />}
           color="green"
         />
         <StatCard
-          title="Pending"
+          title={t('common.pending')}
           value={formatCurrency(walletData.pending)}
-          icon={<Clock className="w-6 h-6" />}
+          icon={<Clock className="w-5 h-5 lg:w-6 lg:h-6" />}
           color="yellow"
         />
         <StatCard
-          title="Withdrawals"
-          value={formatCurrency(walletData.totalEarned - walletData.balance)}
-          icon={<WalletIcon className="w-6 h-6" />}
-          color="blue"
+          title={t('worker.commissionDeducted')}
+          value={formatCurrency(walletData.totalCommission)}
+          icon={<Percent className="w-5 h-5 lg:w-6 lg:h-6" />}
+          color="red"
         />
+        <StatCard
+          title={t('worker.platformCommission')}
+          value={`${commission}%`}
+          icon={<DollarSign className="w-5 h-5 lg:w-6 lg:h-6" />}
+          color="purple"
+        />
+      </div>
+
+      {/* Bank Details Section */}
+      <div className="glass-card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-white">{t('worker.bankDetailsSection')}</h2>
+          {!showBankForm && (
+            <button
+              onClick={() => setShowBankForm(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 text-white/60 hover:bg-white/10 hover:text-white text-xs font-medium transition-all min-h-[40px]"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              {bankForm.bankName ? t('worker.editBankDetails') : t('worker.addBankDetails')}
+            </button>
+          )}
+        </div>
+
+        {showBankForm ? (
+          <form onSubmit={handleSaveBankDetails} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-white/40 mb-1.5 font-medium">{t('worker.bankName')}</label>
+                <select
+                  value={bankForm.bankName}
+                  onChange={(e) => setBankForm({ ...bankForm, bankName: e.target.value })}
+                  className="glass-input w-full px-4 py-3 text-sm text-white appearance-none cursor-pointer"
+                >
+                  <option value="" className="bg-gray-900">{t('worker.bankNamePlaceholder')}</option>
+                  {BANK_OPTIONS.map((b) => (
+                    <option key={b} value={b} className="bg-gray-900">{b}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-white/40 mb-1.5 font-medium">{t('worker.accountNumber')}</label>
+                <input
+                  type="text"
+                  value={bankForm.accountNumber}
+                  onChange={(e) => setBankForm({ ...bankForm, accountNumber: e.target.value })}
+                  placeholder={t('worker.accountNumberPlaceholder')}
+                  className="glass-input w-full px-4 py-3 text-sm text-white placeholder:text-white/30"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-white/40 mb-1.5 font-medium">{t('worker.accountTitle')}</label>
+              <input
+                type="text"
+                value={bankForm.accountTitle}
+                onChange={(e) => setBankForm({ ...bankForm, accountTitle: e.target.value })}
+                placeholder={t('worker.accountTitlePlaceholder')}
+                className="glass-input w-full px-4 py-3 text-sm text-white placeholder:text-white/30 sm:max-w-md"
+              />
+            </div>
+
+            {bankError && (
+              <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3">{bankError}</p>
+            )}
+            {bankSuccess && (
+              <p className="text-sm text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">{bankSuccess}</p>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowBankForm(false)}
+                className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 transition-all text-sm font-medium min-h-[44px]"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="submit"
+                disabled={savingBank}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all text-sm font-semibold disabled:opacity-50 min-h-[44px]"
+              >
+                {savingBank ? (
+                  <div className="w-4 h-4 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                {t('worker.saveBankDetails')}
+              </button>
+            </div>
+          </form>
+        ) : bankForm.bankName ? (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <p className="text-xs text-white/40 mb-1">{t('worker.bankName')}</p>
+              <p className="text-sm font-medium text-white">{bankForm.bankName}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <p className="text-xs text-white/40 mb-1">{t('worker.accountNumber')}</p>
+              <p className="text-sm font-medium text-white font-mono">{maskAccountNumber(bankForm.accountNumber)}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <p className="text-xs text-white/40 mb-1">{t('worker.accountTitle')}</p>
+              <p className="text-sm font-medium text-white">{bankForm.accountTitle}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-6">
+            <Building className="w-10 h-10 text-white/15 mx-auto mb-2" />
+            <p className="text-sm text-white/40">{t('worker.noBankDetails')}</p>
+          </div>
+        )}
       </div>
 
       {/* Withdrawal Modal */}
       {showWithdraw && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="glass-card p-6 w-full max-w-md animate-fade-in border border-white/10">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center sm:p-4">
+          <div className="glass-card p-6 w-full max-w-md animate-fade-in border border-white/10 sm:my-0 max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-white">Withdraw Funds</h2>
+              <h2 className="text-lg font-semibold text-white">{t('worker.withdrawFunds')}</h2>
               <button
                 onClick={() => setShowWithdraw(false)}
-                className="p-2 rounded-lg hover:bg-white/10 text-white/50 transition-colors"
+                className="p-2.5 rounded-lg hover:bg-white/10 text-white/50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -262,7 +499,7 @@ export default function WalletPage() {
             <form onSubmit={handleWithdraw} className="space-y-4">
               <div>
                 <label className="block text-xs text-white/40 mb-1.5 font-medium">
-                  Available: {formatCurrency(walletData.balance)}
+                  {t('worker.availableBalance')}: {formatCurrency(walletData.balance)}
                 </label>
                 <div className="relative">
                   <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
@@ -280,7 +517,7 @@ export default function WalletPage() {
               </div>
 
               <div>
-                <label className="block text-xs text-white/40 mb-1.5 font-medium">Bank Name</label>
+                <label className="block text-xs text-white/40 mb-1.5 font-medium">{t('worker.bankName')}</label>
                 <div className="relative">
                   <Building className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                   <input
@@ -294,28 +531,28 @@ export default function WalletPage() {
               </div>
 
               <div>
-                <label className="block text-xs text-white/40 mb-1.5 font-medium">Account Number</label>
+                <label className="block text-xs text-white/40 mb-1.5 font-medium">{t('worker.accountNumber')}</label>
                 <div className="relative">
                   <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                   <input
                     type="text"
                     value={withdrawForm.accountNumber}
                     onChange={(e) => setWithdrawForm({ ...withdrawForm, accountNumber: e.target.value })}
-                    placeholder="Your bank account number"
+                    placeholder={t('worker.accountNumberPlaceholder')}
                     className="glass-input w-full pl-10 pr-4 py-3 text-sm text-white placeholder:text-white/30"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs text-white/40 mb-1.5 font-medium">Account Title</label>
+                <label className="block text-xs text-white/40 mb-1.5 font-medium">{t('worker.accountTitle')}</label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                   <input
                     type="text"
                     value={withdrawForm.accountTitle}
                     onChange={(e) => setWithdrawForm({ ...withdrawForm, accountTitle: e.target.value })}
-                    placeholder="Account holder name"
+                    placeholder={t('worker.accountTitlePlaceholder')}
                     className="glass-input w-full pl-10 pr-4 py-3 text-sm text-white placeholder:text-white/30"
                   />
                 </div>
@@ -337,24 +574,24 @@ export default function WalletPage() {
                 <button
                   type="button"
                   onClick={() => setShowWithdraw(false)}
-                  className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 transition-all text-sm font-medium"
+                  className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 transition-all text-sm font-medium min-h-[44px]"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={withdrawing}
-                  className="flex-1 px-4 py-3 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-3 rounded-xl bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 min-h-[44px]"
                 >
                   {withdrawing ? (
                     <>
                       <div className="w-4 h-4 border-2 border-emerald-400/30 border-t-emerald-400 rounded-full animate-spin" />
-                      Processing...
+                      {t('common.processing')}
                     </>
                   ) : (
                     <>
                       <Banknote className="w-4 h-4" />
-                      Withdraw
+                      {t('worker.withdrawFunds')}
                     </>
                   )}
                 </button>
@@ -365,34 +602,34 @@ export default function WalletPage() {
       )}
 
       {/* Transaction History */}
-      <div className="glass-card p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">Transaction History</h2>
+      <div className="glass-card p-4 lg:p-6">
+        <h2 className="text-lg font-semibold text-white mb-4">{t('worker.transactionHistory')}</h2>
         {transactions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <WalletIcon className="w-12 h-12 text-white/20 mb-3" />
-            <p className="text-white/40 text-sm">No transactions yet</p>
-            <p className="text-white/20 text-xs mt-1">Your payment history will appear here</p>
+            <p className="text-white/40 text-sm">{t('worker.noTransactions')}</p>
+            <p className="text-white/20 text-xs mt-1">{t('worker.noTransactionsSub')}</p>
           </div>
         ) : (
           <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
             {transactions.map((txn) => (
               <div
                 key={txn.id}
-                className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/3 transition-all"
+                className="flex items-center gap-3 lg:gap-4 p-3 rounded-xl hover:bg-white/3 transition-all"
               >
-                <div className={`p-2.5 rounded-lg shrink-0 ${txn.type === 'credit' ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+                <div className={`p-2 lg:p-2.5 rounded-lg shrink-0 ${txn.type === 'credit' ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
                   {txn.type === 'credit' ? (
-                    <ArrowDownLeft className="w-5 h-5 text-emerald-400" />
+                    <ArrowDownLeft className="w-4 h-4 lg:w-5 lg:h-5 text-emerald-400" />
                   ) : (
-                    <ArrowUpRight className="w-5 h-5 text-red-400" />
+                    <ArrowUpRight className="w-4 h-4 lg:w-5 lg:h-5 text-red-400" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{txn.description}</p>
+                  <p className="text-xs lg:text-sm font-medium text-white truncate">{txn.description}</p>
                   <p className="text-xs text-white/30 mt-0.5">{formatDate(txn.created_at)}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className={`text-sm font-semibold ${txn.type === 'credit' ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <p className={`text-xs lg:text-sm font-semibold ${txn.type === 'credit' ? 'text-emerald-400' : 'text-red-400'}`}>
                     {txn.type === 'credit' ? '+' : '-'}{formatCurrency(txn.amount)}
                   </p>
                   <span className={`badge text-[10px] ${getStatusColor(txn.status)}`}>{txn.status}</span>

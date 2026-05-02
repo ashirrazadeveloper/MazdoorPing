@@ -2,7 +2,7 @@
 
 import { AuthGuard } from '@/components/shared/AuthGuard';
 import { SectionLayout } from '@/components/layouts/SectionLayout';
-import { LayoutDashboard, Users, Building2, Briefcase, Tag, DollarSign, AlertTriangle, Settings, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Users, Building2, Briefcase, Tag, DollarSign, AlertTriangle, Settings, ShieldCheck, Bell } from 'lucide-react';
 
 const sidebarItems = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -13,6 +13,7 @@ const sidebarItems = [
   { label: 'Categories', href: '/admin/categories', icon: Tag },
   { label: 'Financials', href: '/admin/financials', icon: DollarSign },
   { label: 'SOS Alerts', href: '/admin/sos-alerts', icon: AlertTriangle },
+  { label: 'Notifications', href: '/admin/notifications', icon: Bell },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 
