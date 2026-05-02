@@ -8,7 +8,6 @@ import { formatCurrency, formatDate, getStatusColor } from '@/lib/utils';
 import { StatCard } from '@/components/shared/StatCard';
 import {
   Wallet as WalletIcon,
-  DollarSign,
   Clock,
   TrendingUp,
   ArrowUpRight,
@@ -27,6 +26,9 @@ export default function EmployerWalletPage() {
   const [showDeposit, setShowDeposit] = useState(false);
   const [depositing, setDepositing] = useState(false);
   const [depositAmount, setDepositAmount] = useState('');
+  const [depositMethod, setDepositMethod] = useState('');
+  const [depositAccount, setDepositAccount] = useState('');
+  const [depositTxId, setDepositTxId] = useState('');
   const [depositError, setDepositError] = useState('');
   const [depositSuccess, setDepositSuccess] = useState('');
 
@@ -91,6 +93,14 @@ export default function EmployerWalletPage() {
       setDepositError(language === 'ur' ? 'ایک وقت میں PKR 1,000,000 سے زیادہ نہیں' : 'Maximum deposit is PKR 1,000,000 at once.');
       return;
     }
+    if (!depositMethod) {
+      setDepositError(language === 'ur' ? 'ادائیگی کا طریقہ منتخب کریں' : 'Please select a deposit method.');
+      return;
+    }
+    if (!depositAccount.trim() || depositAccount.trim().length < 7) {
+      setDepositError(language === 'ur' ? 'درست اکاؤنٹ/فون نمبر درج کریں' : 'Please enter a valid account/phone number.');
+      return;
+    }
 
     setDepositing(true);
     try {
@@ -99,8 +109,9 @@ export default function EmployerWalletPage() {
         to_user_id: employerProfile?.user_id,
         amount,
         type: 'credit',
-        status: 'completed',
-        description: 'Employer Wallet Deposit',
+        status: 'pending',
+        description: `Deposit via ${depositMethod} - Pending Verification`,
+        metadata: { deposit_method: depositMethod, account_number: depositAccount.trim(), transaction_id: depositTxId.trim() },
       });
 
       if (error) {
@@ -108,8 +119,11 @@ export default function EmployerWalletPage() {
         return;
       }
 
-      setDepositSuccess(t('wallet.depositSuccess'));
+      setDepositSuccess(t('wallet2.depositPendingMsg'));
       setDepositAmount('');
+      setDepositMethod('');
+      setDepositAccount('');
+      setDepositTxId('');
       setShowDeposit(false);
 
       // Refresh wallet data
@@ -175,7 +189,7 @@ export default function EmployerWalletPage() {
           <p className="text-3xl lg:text-5xl font-bold text-white mb-1">
             {formatCurrency(walletData.balance)}
           </p>
-          <p className="text-sm text-white/30">MazdoorPing Employer Account</p>
+          <p className="text-sm text-white/30">{t('wallet2.employerAccount')}</p>
           <button
             onClick={() => {
               setShowDeposit(true);
@@ -201,7 +215,7 @@ export default function EmployerWalletPage() {
         <StatCard
           title={t('wallet.totalSpent')}
           value={formatCurrency(walletData.totalSpent)}
-          icon={<DollarSign className="w-5 h-5 lg:w-6 lg:h-6" />}
+          icon={<span className="text-lg lg:text-xl font-bold">₨</span>}
           color="red"
         />
         <StatCard
@@ -218,77 +232,81 @@ export default function EmployerWalletPage() {
           <div className="glass-card p-6 w-full max-w-md animate-fade-in border border-white/10 sm:my-0 max-h-[90vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-white">{t('wallet.depositTitle')}</h2>
-              <button
-                onClick={() => setShowDeposit(false)}
-                className="p-2.5 rounded-lg hover:bg-white/10 text-white/50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-              >
+              <button onClick={() => setShowDeposit(false)} className="p-2.5 rounded-lg hover:bg-white/10 text-white/50 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <p className="text-sm text-white/50 mb-4">{t('wallet.depositSubtitle')}</p>
 
+            {/* Warning banner */}
+            <div className="glass-card p-3 mb-4 bg-amber-500/5 border border-amber-500/20">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-white/60">{t('wallet2.noFakeDeposit')}</p>
+              </div>
+            </div>
+
             <form onSubmit={handleDeposit} className="space-y-4">
+              {/* Amount */}
               <div>
                 <label className="block text-xs text-white/40 mb-1.5 font-medium">{t('wallet.amount')}</label>
                 <div className="relative">
-                  <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                  <input
-                    type="number"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
-                    placeholder={t('wallet.amountPlaceholder')}
-                    className="glass-input w-full pl-10 pr-4 py-3 text-sm text-white placeholder:text-white/30"
-                    min="500"
-                    max="1000000"
-                    step="100"
-                  />
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-white/30 font-medium">₨</span>
+                  <input type="number" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} placeholder={t('wallet.amountPlaceholder')} className="glass-input w-full pl-10 pr-4 py-3 text-sm text-white placeholder:text-white/30" min="500" max="1000000" step="100" />
                 </div>
                 <p className="text-xs text-white/30 mt-1">{t('wallet.minDeposit')}</p>
               </div>
 
-              <div className="glass-card p-3 bg-blue-500/5 border-blue-500/10">
-                <div className="flex items-start gap-2">
-                  <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                  <p className="text-xs text-white/50">{t('wallet.depositNote')}</p>
+              {/* Deposit Method */}
+              <div>
+                <label className="block text-xs text-white/40 mb-1.5 font-medium">{t('wallet2.depositMethod')}</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {['jazzcash', 'easypaisa', 'bank_transfer'].map((method) => (
+                    <button
+                      key={method}
+                      type="button"
+                      onClick={() => setDepositMethod(method)}
+                      className={`p-3 rounded-xl border text-xs font-medium transition-all text-center min-h-[44px] ${
+                        depositMethod === method
+                          ? 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                          : 'bg-white/3 text-white/50 border-white/10 hover:bg-white/5'
+                      }`}
+                    >
+                      {t(`wallet2.${method === 'jazzcash' ? 'jazzcash' : method === 'easypaisa' ? 'easypaisa' : 'bankTransfer'}`)}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {depositError && (
-                <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                  {depositError}
-                </p>
-              )}
+              {/* Account Number */}
+              <div>
+                <label className="block text-xs text-white/40 mb-1.5 font-medium">{t('wallet2.accountOrPhoneNumber')}</label>
+                <input type="text" value={depositAccount} onChange={(e) => setDepositAccount(e.target.value)} placeholder={t('wallet2.enterAccountOrPhone')} className="glass-input w-full px-4 py-3 text-sm text-white placeholder:text-white/30" />
+              </div>
 
+              {/* Transaction ID (optional) */}
+              <div>
+                <label className="block text-xs text-white/40 mb-1.5 font-medium">{t('wallet2.transactionId')}</label>
+                <input type="text" value={depositTxId} onChange={(e) => setDepositTxId(e.target.value)} placeholder={t('wallet2.enterTransactionId')} className="glass-input w-full px-4 py-3 text-sm text-white placeholder:text-white/30" />
+              </div>
+
+              {depositError && (
+                <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-3">{depositError}</p>
+              )}
               {depositSuccess && (
-                <p className="text-sm text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">
-                  {depositSuccess}
-                </p>
+                <p className="text-sm text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3">{depositSuccess}</p>
               )}
 
               <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowDeposit(false)}
-                  className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 transition-all text-sm font-medium min-h-[44px]"
-                >
+                <button type="button" onClick={() => setShowDeposit(false)} className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 transition-all text-sm font-medium min-h-[44px]">
                   {t('common.cancel')}
                 </button>
-                <button
-                  type="submit"
-                  disabled={depositing}
-                  className="flex-1 px-4 py-3 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border border-blue-500/20 transition-all text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 min-h-[44px]"
-                >
+                <button type="submit" disabled={depositing} className="flex-1 px-4 py-3 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border border-blue-500/20 transition-all text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 min-h-[44px]">
                   {depositing ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
-                      {t('common.processing')}
-                    </>
+                    <><div className="w-4 h-4 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />{t('wallet2.processingDeposit')}</>
                   ) : (
-                    <>
-                      <Banknote className="w-4 h-4" />
-                      {t('wallet.addFunds')}
-                    </>
+                    <><Banknote className="w-4 h-4" />{t('wallet.addFunds')}</>
                   )}
                 </button>
               </div>

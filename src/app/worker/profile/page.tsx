@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '@/store/auth-store';
+import { useLanguageStore } from '@/store/language-store';
 import { supabase } from '@/lib/supabase';
 import { getInitials } from '@/lib/utils';
 import MapWrapper from '@/components/shared/MapWrapper';
+import LocationPicker from '@/components/shared/LocationPicker';
 import {
   Mail,
   Phone,
@@ -41,6 +43,8 @@ interface FormData {
   hourlyRate: string;
   gender: string;
   dateOfBirth: string;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 function formatCnic(value: string): string {
@@ -64,11 +68,14 @@ function buildFormData(profile: { full_name?: string | null; phone?: string | nu
     hourlyRate: worker?.hourly_rate?.toString() || '',
     gender: worker?.gender || '',
     dateOfBirth: worker?.date_of_birth ? worker.date_of_birth.split('T')[0] : '',
+    latitude: worker?.latitude ?? null,
+    longitude: worker?.longitude ?? null,
   };
 }
 
 export default function ProfilePage() {
   const { workerProfile, profile, fetchProfiles } = useAuthStore();
+  const { t } = useLanguageStore();
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -140,6 +147,8 @@ export default function ProfilePage() {
           hourly_rate: parseFloat(editFormData.hourlyRate) || 0,
           gender: editFormData.gender || null,
           date_of_birth: editFormData.dateOfBirth || null,
+          latitude: editFormData.latitude,
+          longitude: editFormData.longitude,
         })
         .eq('user_id', workerProfile.user_id);
 
@@ -729,20 +738,35 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Location Map */}
+      {/* Location Map - Editable */}
       <div className="glass-card p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
             <MapPin className="w-5 h-5 text-emerald-400" />
-            My Location
+            {editMode ? t('cards.setLocationOnMap') : t('cards.myLocation')}
           </h3>
-          {workerProfile?.city && (
+          {(workerProfile?.city || workerProfile?.province) && !editMode && (
             <span className="text-sm text-white/40">
               {workerProfile.city}{workerProfile.province ? `, ${workerProfile.province}` : ''}
             </span>
           )}
         </div>
-        {hasLocation ? (
+        {editMode ? (
+          <LocationPicker
+            initialLat={workerProfile?.latitude ?? undefined}
+            initialLng={workerProfile?.longitude ?? undefined}
+            onLocationSelect={(newLat, newLng) => {
+              if (editFormData) {
+                setEditFormData({
+                  ...editFormData,
+                  latitude: newLat,
+                  longitude: newLng,
+                });
+              }
+            }}
+            height="300px"
+          />
+        ) : hasLocation ? (
           <MapWrapper
             latitude={workerProfile!.latitude!}
             longitude={workerProfile!.longitude!}
@@ -753,10 +777,8 @@ export default function ProfilePage() {
           <div className="h-[300px] rounded-xl bg-white/[0.02] border border-white/5 flex items-center justify-center">
             <div className="text-center">
               <Globe className="w-10 h-10 text-white/15 mx-auto mb-3" />
-              <p className="text-sm text-white/30">No location set</p>
-              <p className="text-xs text-white/20 mt-1">
-                Set your location to appear on employer searches
-              </p>
+              <p className="text-sm text-white/30">{t('cards.noLocationSet')}</p>
+              <p className="text-xs text-white/20 mt-1">{t('cards.setLocationToAppear')}</p>
             </div>
           </div>
         )}

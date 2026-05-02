@@ -1,13 +1,13 @@
 'use client';
 
-import { Bell, MessageCircle, DollarSign, Shield, AlertTriangle, Settings } from 'lucide-react';
+import { Bell, MessageCircle, Shield, AlertTriangle, Settings } from 'lucide-react';
 import { timeAgo } from '@/lib/utils';
 import type { Notification } from '@/types';
 
 const iconMap: Record<string, React.ReactNode> = {
   job: <Bell className="w-4 h-4 text-blue-400" />,
   bid: <MessageCircle className="w-4 h-4 text-emerald-400" />,
-  payment: <DollarSign className="w-4 h-4 text-yellow-400" />,
+  payment: <span className="text-sm font-bold text-yellow-400">₨</span>,
   verification: <Shield className="w-4 h-4 text-violet-400" />,
   sos: <AlertTriangle className="w-4 h-4 text-red-400" />,
   system: <Settings className="w-4 h-4 text-white/50" />,

@@ -3,6 +3,7 @@
 import { Star, MapPin, Briefcase, CheckCircle } from 'lucide-react';
 import { getInitials, getStatusColor } from '@/lib/utils';
 import type { Worker } from '@/types';
+import { useLanguageStore } from '@/store/language-store';
 
 interface WorkerCardProps {
   worker: Worker;
@@ -12,6 +13,8 @@ interface WorkerCardProps {
 }
 
 export function WorkerCard({ worker, showActions, onViewProfile, onSave }: WorkerCardProps) {
+  const { t } = useLanguageStore();
+
   return (
     <div className="glass-card p-5 animate-fade-in">
       <div className="flex items-start gap-4">
@@ -37,7 +40,7 @@ export function WorkerCard({ worker, showActions, onViewProfile, onSave }: Worke
             </div>
             <div className="flex items-center gap-1 text-sm text-white/50">
               <Briefcase className="w-3.5 h-3.5" />
-              <span>{worker.completed_jobs} jobs</span>
+              <span>{worker.completed_jobs} {t('cards.jobs')}</span>
             </div>
             <div className="flex items-center gap-1 text-sm text-yellow-400">
               <Star className="w-3.5 h-3.5 fill-yellow-400" />
@@ -48,7 +51,7 @@ export function WorkerCard({ worker, showActions, onViewProfile, onSave }: Worke
             <div className="flex flex-wrap gap-1.5 mb-3">
               {worker.skills.map((skill) => (
                 <span key={skill.id} className="px-2 py-0.5 text-xs rounded-full bg-white/5 text-white/50 border border-white/10">
-                  {skill.category?.name || 'Skill'}
+                  {skill.category?.name || t('cards.skill')}
                 </span>
               ))}
             </div>
@@ -62,12 +65,12 @@ export function WorkerCard({ worker, showActions, onViewProfile, onSave }: Worke
         <div className="flex gap-2 mt-4 pt-3 border-t border-white/5">
           {onViewProfile && (
             <button onClick={() => onViewProfile(worker.id)} className="flex-1 px-4 py-2 text-sm font-medium rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border border-blue-500/20 transition-all">
-              View Profile
+              {t('cards.viewProfile')}
             </button>
           )}
           {onSave && (
             <button onClick={() => onSave(worker.id)} className="px-4 py-2 text-sm font-medium rounded-lg bg-white/5 text-white/60 hover:bg-white/10 border border-white/10 transition-all">
-              Save
+              {t('cards.save')}
             </button>
           )}
         </div>
