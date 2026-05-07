@@ -62,7 +62,7 @@ body {
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(15, 15, 30, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -71,7 +71,7 @@ body {
 }
 
 .glass-card:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(15, 15, 30, 0.92);
   border-color: rgba(255, 255, 255, 0.12);
   transform: translateY(-2px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -297,6 +297,14 @@ body {
 /* RTL Urdu font support - applied via body class, not dir="rtl" */
 body.urdu-font {
   font-family: 'Noto Nastaliq Urdu', 'Inter', system-ui, sans-serif;
+  line-height: 2.2;
+  letter-spacing: 0.01em;
+  word-spacing: 0.05em;
+}
+
+body.urdu-font p, body.urdu-font span, body.urdu-font div, body.urdu-font h1, body.urdu-font h2, body.urdu-font h3, body.urdu-font h4, body.urdu-font li, body.urdu-font td, body.urdu-font th, body.urdu-font label {
+  line-height: 2;
+  overflow-wrap: break-word;
 }
 
 body.urdu-font .font-mono {
@@ -384,7 +392,7 @@ body.urdu-font .skeleton {
 
 /* Premium glass effects */
 .glass-card-premium {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(15, 15, 30, 0.88);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -394,7 +402,7 @@ body.urdu-font .skeleton {
 }
 
 .glass-card-premium:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(15, 15, 30, 0.94);
   border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-3px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);

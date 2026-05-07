@@ -40,92 +40,6 @@ interface Message {
   senderAvatar?: string | null;
 }
 
-// Mock data for employer fallback
-const mockConversations: Conversation[] = [
-  {
-    id: 'e1',
-    otherUserId: 'wrk1',
-    otherUserName: 'Muhammad Ali',
-    otherUserAvatar: null,
-    lastMessage: 'Ji, main kal subah 9 baje aaonga InshaAllah.',
-    lastMessageTime: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
-    unreadCount: 1,
-    isOnline: true,
-  },
-  {
-    id: 'e2',
-    otherUserId: 'wrk2',
-    otherUserName: 'Rashid Electrician',
-    otherUserAvatar: null,
-    lastMessage: 'Thank you for accepting my bid!',
-    lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-    unreadCount: 0,
-    isOnline: false,
-  },
-  {
-    id: 'e3',
-    otherUserId: 'wrk3',
-    otherUserName: 'Hassan Plumber',
-    otherUserAvatar: null,
-    lastMessage: 'Material ki list bhej di hai, check karein.',
-    lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-    unreadCount: 0,
-    isOnline: false,
-  },
-];
-
-const mockMessages: Record<string, Message[]> = {
-  'e1': [
-    {
-      id: 'm1',
-      senderId: 'me',
-      content: 'Assalam o Alaikum. Can you come tomorrow for the electrical work?',
-      type: 'text',
-      createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-      isRead: true,
-    },
-    {
-      id: 'm2',
-      senderId: 'wrk1',
-      content: 'Ji, main kal subah 9 baje aaonga InshaAllah.',
-      type: 'text',
-      createdAt: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
-      isRead: false,
-      senderName: 'Muhammad Ali',
-    },
-  ],
-  'e2': [
-    {
-      id: 'm3',
-      senderId: 'wrk2',
-      content: 'Thank you for accepting my bid!',
-      type: 'text',
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
-      isRead: true,
-      senderName: 'Rashid Electrician',
-    },
-  ],
-  'e3': [
-    {
-      id: 'm4',
-      senderId: 'me',
-      content: 'Please share the material list for the plumbing project.',
-      type: 'text',
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-      isRead: true,
-    },
-    {
-      id: 'm5',
-      senderId: 'wrk3',
-      content: 'Material ki list bhej di hai, check karein.',
-      type: 'text',
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-      isRead: true,
-      senderName: 'Hassan Plumber',
-    },
-  ],
-};
-
 export default function EmployerChatPage() {
   const { t } = useLanguageStore();
   const { profile } = useAuthStore();
@@ -168,10 +82,10 @@ export default function EmployerChatPage() {
             }))
           );
         } else {
-          setConversations(mockConversations);
+          setConversations([]);
         }
       } catch {
-        if (!cancelled) setConversations(mockConversations);
+        if (!cancelled) setConversations([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -204,10 +118,10 @@ export default function EmployerChatPage() {
           }))
         );
       } else {
-        setMessages(mockMessages[conversationId] || []);
+        setMessages([]);
       }
     } catch {
-      setMessages(mockMessages[conversationId] || []);
+      setMessages([]);
     }
   };
 

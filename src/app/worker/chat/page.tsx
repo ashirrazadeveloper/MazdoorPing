@@ -40,101 +40,6 @@ interface Message {
   senderAvatar?: string | null;
 }
 
-// Mock data for fallback
-const mockConversations: Conversation[] = [
-  {
-    id: '1',
-    otherUserId: 'emp1',
-    otherUserName: 'Fatima Malik',
-    otherUserAvatar: null,
-    lastMessage: 'I need an electrician for my new office in Gulberg.',
-    lastMessageTime: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-    unreadCount: 2,
-    isOnline: true,
-  },
-  {
-    id: '2',
-    otherUserId: 'emp2',
-    otherUserName: 'Ahmed Khan',
-    otherUserAvatar: null,
-    lastMessage: 'Your bid has been accepted. When can you start?',
-    lastMessageTime: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-    unreadCount: 0,
-    isOnline: false,
-  },
-  {
-    id: '3',
-    otherUserId: 'emp3',
-    otherUserName: 'Bilal Builders',
-    otherUserAvatar: null,
-    lastMessage: 'The project will start next Monday InshaAllah.',
-    lastMessageTime: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    unreadCount: 0,
-    isOnline: true,
-  },
-];
-
-const mockMessages: Record<string, Message[]> = {
-  '1': [
-    {
-      id: 'm1',
-      senderId: 'emp1',
-      content: 'Assalam o Alaikum! I saw your profile on MazdoorPing.',
-      type: 'text',
-      createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-      isRead: true,
-      senderName: 'Fatima Malik',
-    },
-    {
-      id: 'm2',
-      senderId: 'me',
-      content: 'Walaikum Assalam! Yes, I am an experienced electrician. How can I help?',
-      type: 'text',
-      createdAt: new Date(Date.now() - 1000 * 60 * 55).toISOString(),
-      isRead: true,
-    },
-    {
-      id: 'm3',
-      senderId: 'emp1',
-      content: 'I need an electrician for my new office in Gulberg.',
-      type: 'text',
-      createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-      isRead: false,
-      senderName: 'Fatima Malik',
-    },
-  ],
-  '2': [
-    {
-      id: 'm4',
-      senderId: 'me',
-      content: 'I can do the plumbing work for Rs. 15,000.',
-      type: 'text',
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-      isRead: true,
-    },
-    {
-      id: 'm5',
-      senderId: 'emp2',
-      content: 'Your bid has been accepted. When can you start?',
-      type: 'text',
-      createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-      isRead: true,
-      senderName: 'Ahmed Khan',
-    },
-  ],
-  '3': [
-    {
-      id: 'm6',
-      senderId: 'emp3',
-      content: 'The project will start next Monday InshaAllah.',
-      type: 'text',
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-      isRead: true,
-      senderName: 'Bilal Builders',
-    },
-  ],
-};
-
 export default function WorkerChatPage() {
   const { t } = useLanguageStore();
   const { profile } = useAuthStore();
@@ -177,10 +82,10 @@ export default function WorkerChatPage() {
             }))
           );
         } else {
-          setConversations(mockConversations);
+          setConversations([]);
         }
       } catch {
-        if (!cancelled) setConversations(mockConversations);
+        if (!cancelled) setConversations([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -213,10 +118,10 @@ export default function WorkerChatPage() {
             }))
           );
         } else {
-          setMessages(mockMessages[conversationId] || []);
+          setMessages([]);
         }
       } catch {
-        setMessages(mockMessages[conversationId] || []);
+        setMessages([]);
       }
   };
 
