@@ -20,7 +20,9 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
+import { useLanguageStore } from '@/store/language-store';
 import { cn } from '@/lib/utils';
+import { LanguageToggle } from '@/components/shared/LanguageToggle';
 
 type Role = 'worker' | 'employer' | '';
 
@@ -31,6 +33,7 @@ function RegisterForm() {
   const preselectedRole = searchParams.get('role') as Role | null;
 
   const { signUp, profile, isLoading, supabaseReady } = useAuthStore();
+  const { t } = useLanguageStore();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -69,31 +72,31 @@ function RegisterForm() {
     setError('');
 
     if (!role) {
-      setError('Worker ya Employer select karein.');
+      setError(t('auth.iAmA'));
       return;
     }
     if (!fullName.trim()) {
-      setError('Apna naam enter karein.');
+      setError(t('auth.fullName'));
       return;
     }
     if (!email.trim()) {
-      setError('Email address enter karein.');
+      setError(t('auth.email'));
       return;
     }
     if (!phone.trim()) {
-      setError('Phone number enter karein.');
+      setError(t('auth.phone'));
       return;
     }
     if (password.length < 8) {
-      setError('Password kam az kam 8 characters ka hona chahiye.');
+      setError(t('auth.passwordMin'));
       return;
     }
     if (password !== confirmPassword) {
-      setError('Dono passwords match nahi karte.');
+      setError(t('auth.passwordsNotMatch'));
       return;
     }
     if (!agreed) {
-      setError('Terms of Service accept karein.');
+      setError(t('auth.agreeTerms'));
       return;
     }
 
@@ -123,7 +126,7 @@ function RegisterForm() {
         }
       }
     } catch {
-      setError('Account create mein masla aaya. Dobara try karein.');
+      setError(t('common.failed'));
       setIsSubmitting(false);
     }
   };
@@ -142,9 +145,9 @@ function RegisterForm() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">Email Check Karein!</h2>
+            <h2 className="text-2xl font-bold text-white mb-2">{t('auth.checkEmail')}</h2>
             <p className="text-white/50 text-sm mb-6">
-              Humne confirmation link bheja hai is email par:
+              {t('auth.checkEmailDesc')}
             </p>
             <div className="glass-input px-4 py-3 rounded-xl mb-8">
               <p className="text-emerald-400 font-medium text-sm truncate">{signupEmail}</p>
@@ -155,8 +158,8 @@ function RegisterForm() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                 </svg>
                 <div className="text-left">
-                  <p className="text-sm font-medium text-blue-400">Zaroori</p>
-                  <p className="text-xs text-white/40 mt-0.5">Email mein aayi confirmation link par click karein account activate karne ke liye. Agar email nahi aaya toh spam folder check karein.</p>
+                  <p className="text-sm font-medium text-blue-400">{t('auth.important')}</p>
+                  <p className="text-xs text-white/40 mt-0.5">{t('auth.checkEmailInfo')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
@@ -164,8 +167,8 @@ function RegisterForm() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                 </svg>
                 <div className="text-left">
-                  <p className="text-sm font-medium text-amber-400">Worker Verification</p>
-                  <p className="text-xs text-white/40 mt-0.5">Agar Worker ki taraf se sign up kiya hai toh profile verify hone tak wait karna hoga.</p>
+                  <p className="text-sm font-medium text-amber-400">{t('auth.workerVerification')}</p>
+                  <p className="text-xs text-white/40 mt-0.5">{t('auth.workerVerificationInfo')}</p>
                 </div>
               </div>
             </div>
@@ -174,13 +177,13 @@ function RegisterForm() {
                 onClick={() => router.push('/login')}
                 className="glass-button w-full py-3 text-sm font-semibold"
               >
-                Login Page Par Jayen
+                {t('auth.goToLogin')}
               </button>
               <button
                 onClick={() => { setSignupSuccess(false); setSignupEmail(''); }}
                 className="w-full py-2.5 text-sm font-medium text-white/50 hover:text-white/70 transition-colors"
               >
-                Dusri email se sign up karein
+                {t('auth.tryAnotherEmail')}
               </button>
             </div>
           </div>
@@ -206,11 +209,14 @@ function RegisterForm() {
               Mazdoor<span className="text-emerald-400">Ping</span>
             </span>
           </Link>
-          <h1 className="mt-6 text-2xl font-bold text-white sm:text-3xl">
-            Account Banayein
+          <div className="flex justify-center mt-3">
+            <LanguageToggle />
+          </div>
+          <h1 className="mt-4 text-2xl font-bold text-white sm:text-3xl">
+            {t('auth.createAccount')}
           </h1>
           <p className="mt-2 text-sm text-white/50">
-            Workers aur employers ko connect karne wali platform
+            {t('auth.registerSubtitle')}
           </p>
         </div>
 
@@ -220,7 +226,7 @@ function RegisterForm() {
             <div className="flex items-start gap-3">
               <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
               <div>
-                <p className="text-sm font-semibold text-red-400">Supabase Not Connected</p>
+                <p className="text-sm font-semibold text-red-400">{t('auth.supabaseNotConnected')}</p>
                 <p className="mt-1 text-xs text-white/50">
                   Account create nahi hoga jab tak Supabase configure nahi hota. Vercel mein environment variables add karein:
                 </p>
@@ -244,7 +250,7 @@ function RegisterForm() {
             {/* Role Selection */}
             <div className="space-y-3">
               <label className="block text-sm font-medium text-white/70">
-                Main hoon
+                {t('auth.iAmA')}
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -276,10 +282,10 @@ function RegisterForm() {
                     />
                   </div>
                   <span className={cn('text-sm font-semibold transition-colors', role === 'worker' ? 'text-emerald-400' : 'text-white/60')}>
-                    Worker
+                    {t('auth.worker')}
                   </span>
                   <span className="text-center text-[11px] leading-tight text-white/30">
-                    Jobs dhundhein aur paise kamayein
+                    {t('auth.workerDesc')}
                   </span>
                 </button>
 
@@ -312,10 +318,10 @@ function RegisterForm() {
                     />
                   </div>
                   <span className={cn('text-sm font-semibold transition-colors', role === 'employer' ? 'text-blue-400' : 'text-white/60')}>
-                    Employer
+                    {t('auth.employer')}
                   </span>
                   <span className="text-center text-[11px] leading-tight text-white/30">
-                    Workers hire karein aur grow karein
+                    {t('auth.employerDesc')}
                   </span>
                 </button>
               </div>
@@ -324,7 +330,7 @@ function RegisterForm() {
             {/* Full Name */}
             <div className="space-y-2">
               <label htmlFor="fullName" className="block text-sm font-medium text-white/70">
-                Poora Naam
+                {t('auth.fullName')}
               </label>
               <div className="relative">
                 <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
@@ -343,7 +349,7 @@ function RegisterForm() {
             {/* Email */}
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm font-medium text-white/70">
-                Email Address
+                {t('auth.email')}
               </label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
@@ -352,7 +358,7 @@ function RegisterForm() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
+                  placeholder={t('auth.enterEmail')}
                   autoComplete="email"
                   className="glass-input w-full py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25"
                 />
@@ -362,7 +368,7 @@ function RegisterForm() {
             {/* Phone */}
             <div className="space-y-2">
               <label htmlFor="phone" className="block text-sm font-medium text-white/70">
-                Phone Number
+                {t('auth.phone')}
               </label>
               <div className="relative">
                 <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
@@ -371,7 +377,7 @@ function RegisterForm() {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="03XX XXXXXXX"
+                  placeholder={t('auth.enterPhone')}
                   autoComplete="tel"
                   className="glass-input w-full py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25"
                 />
@@ -381,7 +387,7 @@ function RegisterForm() {
             {/* Password */}
             <div className="space-y-2">
               <label htmlFor="password" className="block text-sm font-medium text-white/70">
-                Password
+                {t('auth.password')}
               </label>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
@@ -390,7 +396,7 @@ function RegisterForm() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Kam az kam 8 characters"
+                  placeholder={t('auth.passwordMin')}
                   autoComplete="new-password"
                   className="glass-input w-full py-3 pl-10 pr-12 text-sm text-white placeholder:text-white/25"
                 />
@@ -423,7 +429,7 @@ function RegisterForm() {
             {/* Confirm Password */}
             <div className="space-y-2">
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/70">
-                Password Dobara Likhein
+                {t('auth.confirmPassword')}
               </label>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
@@ -432,7 +438,7 @@ function RegisterForm() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Password dobara enter karein"
+                  placeholder={t('auth.reEnterPassword')}
                   autoComplete="new-password"
                   className={cn(
                     'glass-input w-full py-3 pl-10 pr-12 text-sm text-white placeholder:text-white/25',
@@ -449,7 +455,7 @@ function RegisterForm() {
                 </button>
               </div>
               {confirmPassword.length > 0 && confirmPassword !== password && (
-                <p className="text-xs text-red-400">Passwords match nahi karte</p>
+                <p className="text-xs text-red-400">{t('auth.passwordsNotMatch')}</p>
               )}
             </div>
 
@@ -468,15 +474,7 @@ function RegisterForm() {
                 {agreed && <Check className="h-3 w-3 text-emerald-400" />}
               </button>
               <p className="text-xs leading-relaxed text-white/40">
-                Main{' '}
-                <a href="#" className="font-medium text-emerald-400 transition-colors hover:text-emerald-300">
-                  Terms of Service
-                </a>{' '}
-                aur{' '}
-                <a href="#" className="font-medium text-emerald-400 transition-colors hover:text-emerald-300">
-                  Privacy Policy
-                </a>{' '}
-                se agree karta/karti hoon
+                {t('auth.agreeTerms')}
               </p>
             </div>
 
@@ -492,16 +490,16 @@ function RegisterForm() {
               {isSubmitting || isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Account Bana Rahay Hain...
+                  {t('auth.creatingAccount')}
                 </>
               ) : !supabaseReady ? (
                 <>
                   <AlertTriangle className="h-4 w-4" />
-                  Supabase Not Connected
+                  {t('auth.supabaseNotConnected')}
                 </>
               ) : (
                 <>
-                  Account Banayein
+                  {t('auth.createAccount')}
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
@@ -509,12 +507,12 @@ function RegisterForm() {
           </form>
 
           <p className="mt-6 text-center text-sm text-white/50">
-            Pehle se account hai?{' '}
+            {t('auth.alreadyHaveAccount')}{' '}
             <Link
               href={redirect ? `/login?redirect=${encodeURIComponent(redirect)}` : '/login'}
               className="font-semibold text-emerald-400 transition-colors hover:text-emerald-300"
             >
-              Sign In
+              {t('auth.signIn')}
             </Link>
           </p>
         </div>
@@ -525,7 +523,7 @@ function RegisterForm() {
             className="inline-flex items-center gap-1 text-xs text-white/30 transition-colors hover:text-white/60"
           >
             <ChevronLeft className="h-3 w-3" />
-            Wapas home par
+            {t('auth.backToHome')}
           </Link>
         </div>
       </div>

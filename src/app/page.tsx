@@ -24,6 +24,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import { useLanguageStore } from '@/store/language-store';
+import { LanguageToggle } from '@/components/shared/LanguageToggle';
 
 const featureKeys = [
   { icon: Search, titleKey: 'landing.findWorkers', descKey: 'landing.findWorkersDesc', gradient: 'from-emerald-500/20 to-emerald-600/5', iconColor: 'text-emerald-400', borderHover: 'hover:border-emerald-500/30' },
@@ -103,6 +104,7 @@ export default function Home() {
                 </a>
               </div>
               <div className="flex items-center gap-2 sm:gap-3">
+                <LanguageToggle />
                 <Link
                   href="/login"
                   className="rounded-lg px-3 py-2 text-sm font-medium text-white/70 transition-all hover:bg-white/5 hover:text-white sm:px-4"

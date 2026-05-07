@@ -23,6 +23,11 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#10b981" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="MazdoorPing" />
       </head>
       <body className={`${inter.variable} font-sans bg-mesh min-h-screen antialiased`}
         style={{ fontFamily: 'var(--font-inter), system-ui, -apple-system, sans-serif' }}

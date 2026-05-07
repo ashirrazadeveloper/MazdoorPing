@@ -6,7 +6,9 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, Zap, Loader2, ArrowRight, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
+import { useLanguageStore } from '@/store/language-store';
 import { cn } from '@/lib/utils';
+import { LanguageToggle } from '@/components/shared/LanguageToggle';
 
 function LoginForm() {
   const router = useRouter();
@@ -14,6 +16,7 @@ function LoginForm() {
   const redirect = searchParams.get('redirect') || null;
 
   const { signIn, isLoading, supabaseReady, connectionError } = useAuthStore();
+  const { t } = useLanguageStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,11 +29,11 @@ function LoginForm() {
     setError('');
 
     if (!email.trim()) {
-      setError('Email address enter karein.');
+      setError(t('auth.email'));
       return;
     }
     if (!password.trim()) {
-      setError('Password enter karein.');
+      setError(t('auth.password'));
       return;
     }
 
@@ -73,7 +76,7 @@ function LoginForm() {
         }
       }
     } catch {
-      setError('Login mein masla aaya. Dobara try karein.');
+      setError(t('common.failed'));
       setIsSubmitting(false);
     }
   };
@@ -95,11 +98,14 @@ function LoginForm() {
               Mazdoor<span className="text-emerald-400">Ping</span>
             </span>
           </Link>
-          <h1 className="mt-6 text-2xl font-bold text-white sm:text-3xl">
-            Welcome Back
+          <div className="flex justify-center mt-3">
+            <LanguageToggle />
+          </div>
+          <h1 className="mt-4 text-2xl font-bold text-white sm:text-3xl">
+            {t('auth.welcomeBack')}
           </h1>
           <p className="mt-2 text-sm text-white/50">
-            Sign in to your account to continue
+            {t('auth.signInSubtitle')}
           </p>
         </div>
 
@@ -109,7 +115,7 @@ function LoginForm() {
             <div className="flex items-start gap-3">
               <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
               <div>
-                <p className="text-sm font-semibold text-red-400">Supabase Not Connected</p>
+                <p className="text-sm font-semibold text-red-400">{t('auth.supabaseNotConnected')}</p>
                 <p className="mt-1 text-xs text-white/50">
                   Login nahi hoga jab tak Supabase configure nahi hota. Vercel mein environment variables add karein:
                 </p>
@@ -138,7 +144,7 @@ function LoginForm() {
 
             <div className="space-y-2">
               <label htmlFor="email" className="block text-sm font-medium text-white/70">
-                Email Address
+                {t('auth.email')}
               </label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
@@ -147,7 +153,7 @@ function LoginForm() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
+                  placeholder={t('auth.enterEmail')}
                   autoComplete="email"
                   className="glass-input w-full py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25"
                 />
@@ -156,7 +162,7 @@ function LoginForm() {
 
             <div className="space-y-2">
               <label htmlFor="password" className="block text-sm font-medium text-white/70">
-                Password
+                {t('auth.password')}
               </label>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
@@ -165,7 +171,7 @@ function LoginForm() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
+                  placeholder={t('auth.enterPassword')}
                   autoComplete="current-password"
                   className="glass-input w-full py-3 pl-10 pr-12 text-sm text-white placeholder:text-white/25"
                 />
@@ -195,16 +201,16 @@ function LoginForm() {
               {isSubmitting || isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Signing In...
+                  {t('auth.signingIn')}
                 </>
               ) : !supabaseReady ? (
                 <>
                   <AlertTriangle className="h-4 w-4" />
-                  Supabase Not Connected
+                  {t('auth.supabaseNotConnected')}
                 </>
               ) : (
                 <>
-                  Sign In
+                  {t('auth.signIn')}
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
@@ -216,7 +222,7 @@ function LoginForm() {
               <div className="w-full border-t border-white/5" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-transparent px-3 text-white/30">or continue with</span>
+              <span className="bg-transparent px-3 text-white/30">{t('auth.orContinueWith')}</span>
             </div>
           </div>
 
@@ -245,9 +251,9 @@ function LoginForm() {
           </div>
 
           <p className="mt-6 text-center text-sm text-white/50">
-            Don&apos;t have an account?{' '}
+            {t('auth.dontHaveAccount')}{' '}
             <Link href="/register" className="font-semibold text-emerald-400 transition-colors hover:text-emerald-300">
-              Create Account
+              {t('auth.createAccount')}
             </Link>
           </p>
         </div>
@@ -257,7 +263,7 @@ function LoginForm() {
             <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
-            Back to home
+            {t('auth.backToHome')}
           </Link>
         </div>
       </div>
