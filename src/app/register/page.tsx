@@ -10,7 +10,6 @@ import {
   Lock,
   Eye,
   EyeOff,
-  Zap,
   Loader2,
   ArrowRight,
   Briefcase,
@@ -19,6 +18,7 @@ import {
   ChevronLeft,
   AlertTriangle,
 } from 'lucide-react';
+import Image from 'next/image';
 import { useAuthStore } from '@/store/auth-store';
 import { useLanguageStore } from '@/store/language-store';
 import { cn } from '@/lib/utils';
@@ -201,14 +201,17 @@ function RegisterForm() {
 
       <div className="relative w-full max-w-md animate-fade-in">
         <div className="mb-8 text-center">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-blue-500 shadow-lg shadow-emerald-500/20">
-              <Zap className="h-5 w-5 text-white" />
+          <Link href="/" className="inline-flex items-center justify-center">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-500/30 to-blue-500/30 blur-xl animate-pulse" />
+              <Image src="/logo.png" alt="MazdoorPing" width={80} height={80} className="logo-3d" priority />
             </div>
-            <span className="text-xl font-bold text-white">
+          </Link>
+          <div className="mt-3">
+            <span className="text-2xl font-bold text-white">
               Mazdoor<span className="text-emerald-400">Ping</span>
             </span>
-          </Link>
+          </div>
           <div className="flex justify-center mt-3">
             <LanguageToggle />
           </div>

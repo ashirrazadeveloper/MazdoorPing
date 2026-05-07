@@ -23,6 +23,7 @@ import {
   TrendingUp,
   MapPin,
 } from 'lucide-react';
+import Image from 'next/image';
 import { useLanguageStore } from '@/store/language-store';
 import { LanguageToggle } from '@/components/shared/LanguageToggle';
 
@@ -85,9 +86,7 @@ export default function Home() {
           <div className="glass mt-3 rounded-2xl px-4 py-3 sm:px-6">
             <div className="flex items-center justify-between">
               <Link href="/" className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-blue-500">
-                  <Zap className="h-5 w-5 text-white" />
-                </div>
+                <Image src="/logo.png" alt="MazdoorPing" width={36} height={36} className="h-9 w-9 rounded-lg object-cover" />
                 <span className="text-lg font-bold text-white">
                   Mazdoor<span className="text-emerald-400">Ping</span>
                 </span>
@@ -495,9 +494,7 @@ export default function Home() {
           <div className="grid gap-8 sm:gap-12 md:grid-cols-2 lg:grid-cols-4">
             <div className="lg:col-span-1">
               <Link href="/" className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-blue-500">
-                  <Zap className="h-5 w-5 text-white" />
-                </div>
+                <Image src="/logo.png" alt="MazdoorPing" width={36} height={36} className="h-9 w-9 rounded-lg object-cover" />
                 <span className="text-lg font-bold text-white">
                   Mazdoor<span className="text-emerald-400">Ping</span>
                 </span>

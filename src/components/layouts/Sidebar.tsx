@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { useLanguageStore } from '@/store/language-store';
 import { cn, getInitials } from '@/lib/utils';
 import { LogOut, ChevronRight, X } from 'lucide-react';
+import Image from 'next/image';
 import type { LucideIcon } from 'lucide-react';
 
 interface NavItem {
@@ -53,9 +54,7 @@ export function Sidebar({ items, accentColor, title, isOpen, isCollapsed, onClos
         )}>
           <div className={cn('items-center', isCollapsed ? '' : 'justify-between flex')}>
             <Link href="/" className={cn('flex items-center gap-3', isCollapsed ? 'justify-center' : '')}>
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center font-bold text-white text-lg shrink-0">
-                M
-              </div>
+              <Image src="/logo.png" alt="MazdoorPing" width={40} height={40} className="w-10 h-10 rounded-xl shrink-0 object-cover" />
               {!isCollapsed && (
                 <div>
                   <h1 className="font-bold text-white text-lg">MazdoorPing</h1>
