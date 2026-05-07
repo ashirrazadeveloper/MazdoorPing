@@ -102,7 +102,7 @@ export function Sidebar({ items, accentColor, title, isOpen, isCollapsed, onClos
         </nav>
 
         {/* Footer - User info + Sign Out */}
-        <div className={cn('border-t border-white/5', isCollapsed ? 'p-3' : 'p-4')}>
+        <div className={cn('border-t border-white/5', isCollapsed ? 'p-3 pb-20 lg:pb-3' : 'p-4 pb-20 lg:pb-4')}>
           {!isCollapsed && (
             <div className="flex items-center gap-3 mb-3 px-2">
               <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center text-sm font-semibold text-white shrink-0">
