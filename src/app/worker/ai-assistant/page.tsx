@@ -71,12 +71,12 @@ export default function WorkerAIAssistantPage() {
       const res = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: content, role: 'worker' }),
+        body: JSON.stringify({ message: content, role: 'worker', lang: useLanguageStore.getState().language }),
       });
       const data = await res.json();
 
       const aiTimestamp = new Date().toISOString();
-      const aiContent = data.content || 'Sorry, could not generate a response.';
+      const aiContent = data.content || data.error || t('aiChat.errorMsg');
       const aiMsg: AIMessage = {
         id: `ai-${aiTimestamp}`,
         role: 'assistant',

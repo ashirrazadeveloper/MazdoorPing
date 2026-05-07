@@ -22,6 +22,7 @@ interface InvoiceCardProps {
     jobTitle?: string;
     toName?: string;
   };
+  onPreview?: () => void;
 }
 
 function getInvoiceStatusColor(status: string): string {
@@ -49,7 +50,7 @@ function getStatusIcon(status: string) {
   }
 }
 
-export function InvoiceCard({ invoice }: InvoiceCardProps) {
+export function InvoiceCard({ invoice, onPreview }: InvoiceCardProps) {
   const { t } = useLanguageStore();
   const statusColor = getInvoiceStatusColor(invoice.status);
 
@@ -108,7 +109,7 @@ export function InvoiceCard({ invoice }: InvoiceCardProps) {
             </p>
           </div>
           <div className="flex items-center gap-1.5">
-            <button className="p-2 rounded-lg bg-white/5 text-white/40 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all" title={t('invoice.viewDetails')}>
+            <button onClick={onPreview} className="p-2 rounded-lg bg-white/5 text-white/40 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all" title={t('invoice.viewDetails')}>
               <Eye className="w-4 h-4" />
             </button>
             <button className="p-2 rounded-lg bg-white/5 text-white/40 hover:text-blue-400 hover:bg-blue-500/10 transition-all" title={t('invoice.downloadPdf')}>

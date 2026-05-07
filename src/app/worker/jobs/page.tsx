@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { JobCard } from '@/components/shared/JobCard';
+import { VoiceSearch } from '@/components/shared/VoiceSearch';
 import { Search, Filter, Briefcase, ChevronDown, Loader2 } from 'lucide-react';
 import type { Job, Category } from '@/types';
 import { useLanguageStore } from '@/store/language-store';
 
 export default function BrowseJobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
-  const { t } = useLanguageStore();
+  const { t, language } = useLanguageStore();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -114,7 +115,10 @@ export default function BrowseJobsPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // searchQuery state change triggers the useEffect to re-fetch
+  };
+
+  const handleVoiceResult = (text: string) => {
+    setSearchQuery(text);
   };
 
   const clearFilters = () => {
@@ -139,9 +143,16 @@ export default function BrowseJobsPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search jobs by title or description..."
-            className="glass-input w-full pl-12 pr-4 py-3 text-sm text-white placeholder:text-white/30"
+            placeholder={t('voiceSearch.searchPlaceholder') || 'Search jobs by title or description...'}
+            className="glass-input w-full pl-12 pr-16 py-3 text-sm text-white placeholder:text-white/30"
           />
+          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+            <VoiceSearch
+              onResult={handleVoiceResult}
+              language={language === 'ur' ? 'ur' : 'en'}
+              size="sm"
+            />
+          </div>
         </div>
         <button
           type="button"
@@ -164,7 +175,7 @@ export default function BrowseJobsPage() {
             <h3 className="text-sm font-semibold text-white">{t("common.filters")}</h3>
             {hasActiveFilters && (
               <button onClick={clearFilters} className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors">
-                Clear All
+                {t('common.clearAll')}
               </button>
             )}
           </div>
@@ -201,8 +212,8 @@ export default function BrowseJobsPage() {
 
       {!loading && jobs.length > 0 && (
         <p className="text-sm text-white/40">
-          Showing {jobs.length} open job{jobs.length !== 1 ? 's' : ''}
-          {hasActiveFilters && ' (filtered)'}
+          {t('voiceSearch.showingResults') || `Showing ${jobs.length} open job${jobs.length !== 1 ? 's' : ''}`}
+          {hasActiveFilters && ` (${t('common.filtered')})`}
         </p>
       )}
 
@@ -236,15 +247,15 @@ export default function BrowseJobsPage() {
           <h3 className="text-lg font-semibold text-white mb-2">{t("common.noData")}</h3>
           <p className="text-white/40 text-sm max-w-md">
             {hasActiveFilters
-              ? 'Try adjusting your filters or search query to find available jobs.'
-              : 'There are no open jobs at the moment. Check back later for new opportunities.'}
+              ? t('voiceSearch.tryAdjusting') || 'Try adjusting your filters or search query to find available jobs.'
+              : t('voiceSearch.noOpenJobs') || 'There are no open jobs at the moment. Check back later for new opportunities.'}
           </p>
           {hasActiveFilters && (
             <button
               onClick={clearFilters}
               className="mt-4 px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/20 transition-all"
             >
-              Clear Filters
+              {t('common.clearAll') || 'Clear Filters'}
             </button>
           )}
         </div>
@@ -266,7 +277,7 @@ export default function BrowseJobsPage() {
             className="flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 hover:text-white transition-all text-sm font-medium disabled:opacity-50"
           >
             {loadingMore ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            {loadingMore ? 'Loading...' : 'Load More Jobs'}
+            {loadingMore ? 'Loading...' : t('common.loadMore') || 'Load More Jobs'}
           </button>
         </div>
       )}
