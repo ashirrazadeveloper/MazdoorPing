@@ -129,9 +129,9 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error('AI Chat error:', msg);
-    return NextResponse.json(
-      { content: generateFallbackResponse(typeof (await request.clone().json()) === 'object' ? (await request.clone().json()).message || '' : '', 'worker') },
-      { status: 200 }
-    );
+    // Always return a helpful fallback response - never crash
+    return NextResponse.json({
+      content: 'Mujhe abhi technical issue aa raha hai. MazdoorPing platform ke baare mein aap ka sawaal samajh gaya hoon. Kuch common topics mein madad kar sakta hoon:\n\n- Profile improve karna\n- Job finding tips\n- Budget/rates guidance\n- Payment & wallet help\n- Safety tips\n\nPlease specific sawaal poochein, main zaroor madad karunga!',
+    }, { status: 200 });
   }
 }

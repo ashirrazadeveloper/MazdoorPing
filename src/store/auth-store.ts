@@ -198,43 +198,90 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     try {
+      // Step 1: Create auth user - the database trigger handle_new_user() will
+      // automatically create profile + worker/employer records
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { data: { full_name: fullName, role, phone } },
       });
 
-      if (error) return { error: getFriendlyErrorMessage(error.message), needsConfirmation: false };
+      if (error) {
+        const friendlyMsg = getFriendlyErrorMessage(error.message);
+        // If RLS or database error, give actionable advice
+        if (error.message.includes('Database error') || error.message.includes('relation') || error.message.includes('function')) {
+          return { error: 'Database mein masla hai. Supabase SQL Editor mein ye SQL run karein aur dobara try karein. Error: ' + friendlyMsg, needsConfirmation: false };
+        }
+        return { error: friendlyMsg, needsConfirmation: false };
+      }
 
       if (data.user) {
-        // Try to insert profile - wrap in try-catch to not fail signup
+        // Step 2: Wait a moment for the trigger to create profile + worker/employer
+        // The trigger handle_new_user() runs automatically after auth.users INSERT
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Step 3: Verify profile was created by trigger, if not create it manually
         try {
-          await supabase.from('profiles').insert({
-            id: data.user.id,
-            email,
-            full_name: fullName,
-            phone,
-            role,
-          });
+          const { data: existingProfile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', data.user.id)
+            .single();
+
+          if (!existingProfile) {
+            // Trigger didn't create profile - create manually
+            const { error: profileErr } = await supabase.from('profiles').insert({
+              id: data.user.id,
+              email,
+              full_name: fullName,
+              phone,
+              role,
+            });
+            if (profileErr) {
+              console.warn('Profile insert failed (trigger may have created it):', profileErr.message);
+            }
+          }
         } catch {
-          // Ignore - auth was successful
+          // Profile might exist or RLS blocks read - ignore
         }
 
-        // Try to insert worker/employer record
+        // Step 4: Verify worker/employer record exists
         if (role === 'worker') {
           try {
-            await supabase.from('workers').insert({
-              user_id: data.user.id,
-              profile_id: data.user.id,
-              status: 'pending',
-            });
+            const { data: existingWorker } = await supabase
+              .from('workers')
+              .select('id')
+              .eq('user_id', data.user.id)
+              .single();
+
+            if (!existingWorker) {
+              const { error: workerErr } = await supabase.from('workers').insert({
+                user_id: data.user.id,
+                profile_id: data.user.id,
+                status: 'pending',
+              });
+              if (workerErr) {
+                console.warn('Worker insert failed:', workerErr.message);
+              }
+            }
           } catch { /* ignore */ }
         } else if (role === 'employer') {
           try {
-            await supabase.from('employers').insert({
-              user_id: data.user.id,
-              profile_id: data.user.id,
-            });
+            const { data: existingEmployer } = await supabase
+              .from('employers')
+              .select('id')
+              .eq('user_id', data.user.id)
+              .single();
+
+            if (!existingEmployer) {
+              const { error: employerErr } = await supabase.from('employers').insert({
+                user_id: data.user.id,
+                profile_id: data.user.id,
+              });
+              if (employerErr) {
+                console.warn('Employer insert failed:', employerErr.message);
+              }
+            }
           } catch { /* ignore */ }
         }
 

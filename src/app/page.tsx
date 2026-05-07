@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import {
   Search,
@@ -22,6 +23,8 @@ import {
   Globe,
   TrendingUp,
   MapPin,
+  Menu,
+  X,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useLanguageStore } from '@/store/language-store';
@@ -64,6 +67,7 @@ function StarRating({ rating }: { rating: number }) {
 
 export default function Home() {
   const { t } = useLanguageStore();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const stats = [
     { value: '10K+', label: t('landing.workersStat'), icon: Users, color: 'text-emerald-400', glow: 'glow-green' },
@@ -82,15 +86,17 @@ export default function Home() {
     <div className="min-h-screen">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 animate-fade-in">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="glass mt-3 rounded-2xl px-4 py-3 sm:px-6">
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+          <div className="glass mt-3 rounded-2xl px-3 py-3 sm:px-6">
             <div className="flex items-center justify-between">
-              <Link href="/" className="flex items-center gap-2">
-                <Image src="/logo.png" alt="MazdoorPing" width={36} height={36} className="h-9 w-9 rounded-lg object-cover" />
-                <span className="text-lg font-bold text-white">
+              <Link href="/" className="flex items-center gap-2 shrink-0">
+                <Image src="/logo.png" alt="MazdoorPing" width={32} height={32} className="h-8 w-8 rounded-lg object-cover sm:h-9 sm:w-9" />
+                <span className="text-base font-bold text-white sm:text-lg">
                   Mazdoor<span className="text-emerald-400">Ping</span>
                 </span>
               </Link>
+
+              {/* Desktop Nav Links */}
               <div className="hidden items-center gap-6 md:flex">
                 <a href="#features" className="text-sm text-white/60 transition-colors hover:text-white">
                   {t('landing.features')}
@@ -102,11 +108,12 @@ export default function Home() {
                   {t('landing.testimonials')}
                 </a>
               </div>
+
               <div className="flex items-center gap-2 sm:gap-3">
                 <LanguageToggle />
                 <Link
                   href="/login"
-                  className="rounded-lg px-3 py-2 text-sm font-medium text-white/70 transition-all hover:bg-white/5 hover:text-white sm:px-4"
+                  className="hidden rounded-lg px-3 py-2 text-sm font-medium text-white/70 transition-all hover:bg-white/5 hover:text-white sm:inline-block sm:px-4"
                 >
                   {t('landing.signInNav')}
                 </Link>
@@ -114,10 +121,56 @@ export default function Home() {
                   href="/register"
                   className="glass-button rounded-lg px-3 py-2 text-sm sm:px-4"
                 >
-                  {t('landing.getStartedNav')}
+                  <span className="hidden sm:inline">{t('landing.getStartedNav')}</span>
+                  <span className="sm:hidden text-xs">{t('landing.getStartedNav')}</span>
                 </Link>
+
+                {/* Mobile Hamburger */}
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="ml-1 flex items-center justify-center rounded-lg p-2 text-white/60 transition-colors hover:bg-white/5 hover:text-white md:hidden"
+                  aria-label="Toggle menu"
+                >
+                  {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </button>
               </div>
             </div>
+
+            {/* Mobile Menu Dropdown */}
+            {mobileMenuOpen && (
+              <div className="mt-3 animate-fade-in border-t border-white/5 pt-3 md:hidden">
+                <div className="flex flex-col gap-1">
+                  <a
+                    href="#features"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="rounded-lg px-3 py-2.5 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white"
+                  >
+                    {t('landing.features')}
+                  </a>
+                  <a
+                    href="#how-it-works"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="rounded-lg px-3 py-2.5 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white"
+                  >
+                    {t('landing.howItWorks')}
+                  </a>
+                  <a
+                    href="#testimonials"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="rounded-lg px-3 py-2.5 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white"
+                  >
+                    {t('landing.testimonials')}
+                  </a>
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="rounded-lg px-3 py-2.5 text-sm font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white sm:hidden"
+                  >
+                    {t('landing.signInNav')}
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </nav>

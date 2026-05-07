@@ -327,26 +327,47 @@ export default function EmployerSetupPage() {
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!profile?.id) return;
 
+    // Get user ID from session (more reliable than profile which may not be loaded)
     setUploadingAvatar(true);
-    const ext = file.name.split('.').pop();
-    const path = `avatars/${profile.id}/${Date.now()}.${ext}`;
-    const url = await uploadFileToStorage(file, 'avatars', path);
-    if (url) updateField('avatarUrl', url);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const uid = profile?.id || session?.user?.id;
+      if (!uid) {
+        setError('Please wait while your account is being set up...');
+        setUploadingAvatar(false);
+        return;
+      }
+      const ext = file.name.split('.').pop();
+      const path = `avatars/${uid}/${Date.now()}.${ext}`;
+      const url = await uploadFileToStorage(file, 'avatars', path);
+      if (url) updateField('avatarUrl', url);
+    } catch {
+      setError('Image upload failed. Please try again.');
+    }
     setUploadingAvatar(false);
   };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!profile?.id) return;
 
     setUploadingLogo(true);
-    const ext = file.name.split('.').pop();
-    const path = `logos/${profile.id}/${Date.now()}.${ext}`;
-    const url = await uploadFileToStorage(file, 'employers', path);
-    if (url) updateField('logoUrl', url);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const uid = profile?.id || session?.user?.id;
+      if (!uid) {
+        setError('Please wait while your account is being set up...');
+        setUploadingLogo(false);
+        return;
+      }
+      const ext = file.name.split('.').pop();
+      const path = `logos/${uid}/${Date.now()}.${ext}`;
+      const url = await uploadFileToStorage(file, 'avatars', path);
+      if (url) updateField('logoUrl', url);
+    } catch {
+      setError('Logo upload failed. Please try again.');
+    }
     setUploadingLogo(false);
   };
 
@@ -356,10 +377,14 @@ export default function EmployerSetupPage() {
     data: Record<string, unknown>
   ): Promise<boolean> => {
     try {
+      // Get access token from client-side Supabase session for server auth fallback
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token || null;
+
       const res = await fetch('/api/employer/setup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ step, data }),
+        body: JSON.stringify({ step, data, accessToken }),
       });
       if (!res.ok) {
         const body = await res.json();

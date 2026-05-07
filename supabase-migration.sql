@@ -609,21 +609,48 @@ CREATE TRIGGER jobs_updated_at BEFORE UPDATE ON jobs
 CREATE TRIGGER bids_updated_at BEFORE UPDATE ON bids
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
--- Auto-create profile on user signup
+-- Auto-create profile on user signup (resilient version with exception handling)
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  user_role TEXT;
 BEGIN
-  INSERT INTO profiles (id, email, full_name, phone, role)
-  VALUES (
-    NEW.id,
-    NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
-    COALESCE(NEW.raw_user_meta_data->>'phone', ''),
-    COALESCE(NEW.raw_user_meta_data->>'role', 'worker')
-  );
+  user_role := COALESCE(NEW.raw_user_meta_data->>'role', 'worker');
+
+  -- Create profile (ignore if already exists due to race condition)
+  BEGIN
+    INSERT INTO public.profiles (id, email, full_name, phone, role)
+    VALUES (
+      NEW.id,
+      NEW.email,
+      COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+      COALESCE(NEW.raw_user_meta_data->>'phone', ''),
+      user_role
+    );
+  EXCEPTION WHEN unique_violation OR not_null_violation OR others THEN
+    NULL; -- Profile might already exist or constraint issue - don't fail signup
+  END;
+
+  -- Create worker record if role is worker
+  IF user_role = 'worker' THEN
+    BEGIN
+      INSERT INTO public.workers (user_id, profile_id, status)
+      VALUES (NEW.id, NEW.id, 'pending');
+    EXCEPTION WHEN unique_violation OR foreign_key_violation OR others THEN
+      NULL; -- Don't fail signup if worker insert fails
+    END;
+  ELSIF user_role = 'employer' THEN
+    BEGIN
+      INSERT INTO public.employers (user_id, profile_id)
+      VALUES (NEW.id, NEW.id);
+    EXCEPTION WHEN unique_violation OR foreign_key_violation OR others THEN
+      NULL; -- Don't fail signup if employer insert fails
+    END;
+  END IF;
+
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users
