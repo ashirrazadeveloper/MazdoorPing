@@ -142,12 +142,12 @@ CREATE POLICY "site_content_delete_auth" ON site_content
 -- ============================================================================
 INSERT INTO site_content (page_slug, section_key, content_en, content_ur, content_type, sort_order) VALUES
 ('about', 'hero_title',
-'About MazdoorPing - Empowering Pakistans Skilled Workers',
+'About MazdoorPing - Empowering Pakistan''s Skilled Workers',
 'مزدور پنگ کے بارے میں - پاکستان کے ماہر مزدوروں کی بااختیار بنانا',
 'text', 1),
 
 ('about', 'hero_subtitle',
-'MazdoorPing is Pakistans leading digital platform bridging the gap between skilled workers and employers. We are transforming the way Pakistan finds and hires trusted professionals for every job, big or small.',
+'MazdoorPing is Pakistan''s leading digital platform bridging the gap between skilled workers and employers. We are transforming the way Pakistan finds and hires trusted professionals for every job, big or small.',
 'مزدور پنگ پاکستان کی پہلی ڈیجیٹل پلیٹ فارم ہے جو ماہر مزدوروں اور آجروں کے درمیان پل بناتی ہے۔ ہم پاکستان میں ہر بڑے اور چھوٹے کام کے لیے قابل اعتماد پیشہ ورانہ افراد تلاش کرنے اور ملازمت دینے کے طریقے کو تبدیل کر رہے ہیں۔',
 'text', 2),
 
@@ -179,12 +179,12 @@ From electricians and plumbers in Karachi to carpenters and painters in Lahore, 
 
 We believe that every skilled worker deserves access to a steady stream of job opportunities, transparent pricing, timely payments, and a safe working environment. Through MazdoorPing, we are building an ecosystem that not only facilitates job matching but also provides workers with tools for professional development, financial management, and community support.
 
-Our commitment extends to employers as well — we help them find the right workers quickly, verify credentials, manage payments securely, and build long-term relationships with reliable professionals. By bridging this gap, we aim to boost Pakistans informal economy and bring millions of workers into the digital mainstream.',
+Our commitment extends to employers as well — we help them find the right workers quickly, verify credentials, manage payments securely, and build long-term relationships with reliable professionals. By bridging this gap, we aim to boost Pakistan''s informal economy and bring millions of workers into the digital mainstream.',
 'ہمارا مشن پاکستان میں ماہر محنت کے بازار میں انقلاب لانا ہے ایک قابل اعتماد، ٹیکنالوجی پر مبنی پلیٹ فارم بنائیں جو ماہر مزدوروں کو روزگار کے مواقع سے جوڑتا ہو اور ہر مزدور کے لیے منصفانہ تنخواہ، محنت کی عزت اور پیشہ ورانہ ترقی یقینی بناتا ہو۔
 
 ہمارا یقین ہے کہ ہر ماہر مزدور کو کام کے مستقل مواقع تک رسائی، شفاف قیمت کاری، وقت پر ادائیگی اور محفوظ کام کے ماحول کا حق ہے۔ مزدور پنگ کے ذریعے، ہم ایک ایکو سسٹم بنا رہے ہیں جو نہ صرف کام کی میچنگ کو آسان بناتا ہے بلکہ مزدوروں کو پیشہ ورانہ ترقی، مالیہ کیانتظام اور برادری کی مدد کے لیے ٹولز بھی فراہم کرتا ہے۔
 
-ہمارا عزم آجروں تک بھی پھیلا ہوا ہے — ہم انہیں صحیح مزدور تیزی سے تلاش کرنے، اسناد کی تصدیق، ادائیگیوں کو محفوظ طریقے سے انتظام کرنے اور قابل اعتماد پیشہ ورانہ افراد کے ساتھ طویل مدتی تعلقات بنانے میں مدد کرتے ہیں۔ اس فرق کو پُر کر کے، ہم پاکستان کی غیر رسمی معیشت کو بڑھانے اور لاکھوں مزدوروں کو ڈیجیٹل	mainstream میں لانے کا ہدف رکھتے ہیں۔',
+ہمارا عزم آجروں تک بھی پھیلا ہوا ہے — ہم انہیں صحیح مزدور تیزی سے تلاش کرنے، اسناد کی تصدیق، ادائیگیوں کو محفوظ طریقے سے انتظام کرنے اور قابل اعتماد پیشہ ورانہ افراد کے ساتھ طویل مدتی تعلقات بنانے میں مدد کرتے ہیں۔ اس فرق کو پُر کر کے، ہم پاکستان کی غیر رسمی معیشت کو بڑھانے اور لاکھوں مزدوروں کو ڈیجیٹل mainstream میں لانے کا ہدف رکھتے ہیں۔',
 'richtext', 6),
 
 ('about', 'section_3_title',
@@ -197,7 +197,7 @@ Our commitment extends to employers as well — we help them find the right work
 
 Trust and Transparency: We believe in building a platform where trust is earned through verified profiles, honest reviews, and complete transparency in pricing and payments.
 
-Dignity of Labor: Every worker, regardless of their trade, deserves respect and recognition. We celebrate the skills and contributions of Pakistans workforce.
+Dignity of Labor: Every worker, regardless of their trade, deserves respect and recognition. We celebrate the skills and contributions of Pakistan''s workforce.
 
 Fairness and Equality: We are committed to ensuring fair wages, equal opportunities, and non-discriminatory practices across our platform for all workers and employers.
 
@@ -227,11 +227,11 @@ Safety and Security: The safety of our workers and employers is paramount. We im
 'text', 9),
 
 ('about', 'section_4_content',
-'MazdoorPing is built by a passionate team of technologists, designers, and social impact enthusiasts who share a common vision: to transform the lives of Pakistans skilled workers through technology.
+'MazdoorPing is built by a passionate team of technologists, designers, and social impact enthusiasts who share a common vision: to transform the lives of Pakistan''s skilled workers through technology.
 
 Our founding team brings together decades of combined experience in software development, product design, community building, and labor market research. Having witnessed firsthand the challenges faced by both workers and employers in the informal sector, we are driven by a deep sense of purpose to create meaningful change.
 
-We are backed by advisors and mentors from Pakistans leading technology companies and social enterprises, who bring invaluable expertise in scaling digital platforms and creating sustainable social impact.
+We are backed by advisors and mentors from Pakistan''s leading technology companies and social enterprises, who bring invaluable expertise in scaling digital platforms and creating sustainable social impact.
 
 Our team operates from multiple cities across Pakistan, ensuring that we stay connected to the communities we serve and understand the unique challenges and opportunities in different regions.',
 'مزدور پنگ ایک پرجوش ٹیم کے ذریعے بنایا گیا ہے جس میں ٹیکنالوجسٹس، ڈیزائنرز اور سماجی اثر کے شوقین افراد شامل ہیں جو ایک مشترکہ وژن رکھتے ہیں: ٹیکنالوجی کے ذریعے پاکستان کے ماہر مزدوروں کی زندگیوں کو تبدیل کرنا۔
@@ -953,7 +953,7 @@ Right to Lodge a Complaint: If you believe we have not handled your personal inf
 'richtext', 14),
 
 ('privacy', 'section_7_title',
-'7. Childrens Privacy',
+'7. Children''s Privacy',
 '7. بچوں کی رازداری',
 'text', 15),
 
@@ -1044,7 +1044,7 @@ INSERT INTO site_content (page_slug, section_key, content_en, content_ur, conten
 'text', 10),
 
 ('general', 'company_tagline',
-'Pakistan\'s Trusted Platform for Skilled Workers',
+'Pakistan''s Trusted Platform for Skilled Workers',
 'پاکستان کے ماہر مزدوروں کے لیے قابل اعتماد پلیٹ فارم',
 'text', 11);
 
