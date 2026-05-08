@@ -77,6 +77,8 @@ export const translations: Translations = {
       // Admin
       adminDashboard: 'Dashboard',
       adminUserApprovals: 'User Approvals',
+      adminWorkerManagement: 'Worker Management',
+      adminEmployerManagement: 'Employer Management',
       adminWorkers: 'Workers',
       adminVerification: 'Verification',
       adminEmployers: 'Employers',
@@ -1324,6 +1326,8 @@ export const translations: Translations = {
       employerFavorites: 'پسندیدہ',
       adminDashboard: 'ڈیش بورڈ',
       adminUserApprovals: 'صارف منظوری',
+      adminWorkerManagement: 'مزدور ایپ مینجمنٹ',
+      adminEmployerManagement: 'آجرو ایپ مینجمنٹ',
       adminWorkers: 'مزدور',
       adminVerification: 'تصدیق',
       adminEmployers: 'آجرو',

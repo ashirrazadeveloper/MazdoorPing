@@ -86,12 +86,12 @@ export default function Home() {
     <div className="min-h-screen">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 animate-fade-in">
-        <div className="mx-auto max-w-7xl px-2 sm:px-4 lg:px-8">
-          <div className="glass mt-2 sm:mt-3 rounded-xl sm:rounded-2xl px-2 sm:px-6 py-2 sm:py-3">
-            <div className="flex items-center justify-between gap-1">
-              <Link href="/" className="flex items-center gap-1.5 shrink-0">
-                <Image src="/logo.png" alt="MazdoorPing" width={32} height={32} className="h-7 w-7 sm:h-9 sm:w-9 rounded-lg object-cover" />
-                <span className="text-sm font-bold text-white sm:text-lg">
+        <div className="mx-auto max-w-7xl px-1.5 sm:px-4 lg:px-8">
+          <div className="glass mt-1.5 sm:mt-3 rounded-lg sm:rounded-2xl px-1.5 sm:px-6 py-1.5 sm:py-3">
+            <div className="flex items-center justify-between gap-0.5">
+              <Link href="/" className="flex items-center gap-1 sm:gap-2 shrink-0">
+                <Image src="/logo.png" alt="MazdoorPing" width={28} height={28} className="h-6 w-6 sm:h-9 sm:w-9 rounded-md sm:rounded-lg object-cover" />
+                <span className="text-xs sm:text-lg font-bold text-white leading-none">
                   Mazdoor<span className="text-emerald-400">Ping</span>
                 </span>
               </Link>
@@ -109,8 +109,10 @@ export default function Home() {
                 </a>
               </div>
 
-              <div className="flex items-center gap-1.5 sm:gap-3">
-                <LanguageToggle />
+              <div className="flex items-center gap-1 sm:gap-3">
+                <div className="hidden sm:block">
+                  <LanguageToggle />
+                </div>
                 <Link
                   href="/login"
                   className="hidden rounded-lg px-3 py-2 text-sm font-medium text-white/70 transition-all hover:bg-white/5 hover:text-white sm:inline-block sm:px-4"
@@ -119,7 +121,7 @@ export default function Home() {
                 </Link>
                 <Link
                   href="/register"
-                  className="glass-button rounded-lg px-3 py-2 text-xs sm:text-sm sm:px-4"
+                  className="glass-button rounded-lg px-2.5 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-sm font-medium"
                 >
                   {t('landing.getStartedNav')}
                 </Link>
@@ -127,10 +129,10 @@ export default function Home() {
                 {/* Mobile Hamburger */}
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="flex items-center justify-center rounded-lg p-1.5 sm:p-2 text-white/60 transition-colors hover:bg-white/5 hover:text-white md:hidden min-w-[36px] min-h-[36px] sm:min-w-[44px] sm:min-h-[44px]"
+                  className="flex items-center justify-center rounded-lg p-1 sm:p-2 text-white/60 transition-colors hover:bg-white/5 hover:text-white md:hidden min-w-[32px] min-h-[32px] sm:min-w-[44px] sm:min-h-[44px]"
                   aria-label="Toggle menu"
                 >
-                  {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                  {mobileMenuOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
                 </button>
               </div>
             </div>
@@ -139,6 +141,9 @@ export default function Home() {
             {mobileMenuOpen && (
               <div className="mt-2 sm:mt-3 animate-fade-in border-t border-white/5 pt-2 sm:pt-3 md:hidden">
                 <div className="flex flex-col gap-1">
+                  <div className="sm:hidden px-3 py-1">
+                    <LanguageToggle />
+                  </div>
                   <a
                     href="#features"
                     onClick={() => setMobileMenuOpen(false)}
@@ -601,12 +606,12 @@ export default function Home() {
               &copy; {new Date().getFullYear()} MazdoorPing. {t('landing.allRightsReserved')}
             </p>
             <div className="flex gap-6">
-              <a href="#" className="text-xs text-white/30 transition-colors hover:text-white/60">
+              <Link href="/privacy" className="text-xs text-white/30 transition-colors hover:text-white/60">
                 {t('landing.privacyPolicy')}
-              </a>
-              <a href="#" className="text-xs text-white/30 transition-colors hover:text-white/60">
+              </Link>
+              <Link href="/terms" className="text-xs text-white/30 transition-colors hover:text-white/60">
                 {t('landing.termsOfService')}
-              </a>
+              </Link>
               <a href="#" className="text-xs text-white/30 transition-colors hover:text-white/60">
                 {t('landing.contact')}
               </a>
