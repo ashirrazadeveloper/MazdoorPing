@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import {
   Search,
@@ -23,8 +22,6 @@ import {
   Globe,
   TrendingUp,
   MapPin,
-  Menu,
-  X,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useLanguageStore } from '@/store/language-store';
@@ -67,7 +64,6 @@ function StarRating({ rating }: { rating: number }) {
 
 export default function Home() {
   const { t } = useLanguageStore();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const stats = [
     { value: '10K+', label: t('landing.workersStat'), icon: Users, color: 'text-emerald-400', glow: 'glow-green' },
@@ -83,20 +79,18 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 animate-fade-in">
-        <div className="mx-auto max-w-7xl px-1.5 sm:px-4 lg:px-8">
-          <div className="glass mt-1.5 sm:mt-3 rounded-lg sm:rounded-2xl px-1.5 sm:px-6 py-1.5 sm:py-3">
-            <div className="flex items-center justify-between gap-0.5">
-              <Link href="/" className="flex items-center gap-1 sm:gap-2 shrink-0">
-                <Image src="/logo.png" alt="MazdoorPing" width={28} height={28} className="h-6 w-6 sm:h-9 sm:w-9 rounded-md sm:rounded-lg object-cover" />
-                <span className="text-xs sm:text-lg font-bold text-white leading-none">
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+          <div className="glass mt-2 rounded-2xl px-3 py-2 sm:mt-3 sm:px-6 sm:py-3">
+            <div className="flex items-center justify-between">
+              <Link href="/" className="flex items-center gap-1.5 sm:gap-2">
+                <Image src="/logo.png" alt="MazdoorPing" width={28} height={28} className="h-7 w-7 sm:h-9 sm:w-9 rounded-lg object-cover" />
+                <span className="text-sm font-bold text-white sm:text-lg">
                   Mazdoor<span className="text-emerald-400">Ping</span>
                 </span>
               </Link>
-
-              {/* Desktop Nav Links */}
               <div className="hidden items-center gap-6 md:flex">
                 <a href="#features" className="text-sm text-white/60 transition-colors hover:text-white">
                   {t('landing.features')}
@@ -108,79 +102,30 @@ export default function Home() {
                   {t('landing.testimonials')}
                 </a>
               </div>
-
-              <div className="flex items-center gap-1 sm:gap-3">
-                <div className="hidden sm:block">
+              <div className="flex items-center gap-1.5 sm:gap-3">
+                <div className="scale-[0.85] sm:scale-100">
                   <LanguageToggle />
                 </div>
                 <Link
                   href="/login"
-                  className="hidden rounded-lg px-3 py-2 text-sm font-medium text-white/70 transition-all hover:bg-white/5 hover:text-white sm:inline-block sm:px-4"
+                  className="hidden rounded-lg px-3 py-2 text-sm font-medium text-white/70 transition-all hover:bg-white/5 hover:text-white sm:inline-flex sm:px-4"
                 >
                   {t('landing.signInNav')}
                 </Link>
                 <Link
                   href="/register"
-                  className="glass-button rounded-lg px-2.5 py-1.5 sm:px-4 sm:py-2 text-[11px] sm:text-sm font-medium"
+                  className="glass-button whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm"
                 >
                   {t('landing.getStartedNav')}
                 </Link>
-
-                {/* Mobile Hamburger */}
-                <button
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="flex items-center justify-center rounded-lg p-1 sm:p-2 text-white/60 transition-colors hover:bg-white/5 hover:text-white md:hidden min-w-[32px] min-h-[32px] sm:min-w-[44px] sm:min-h-[44px]"
-                  aria-label="Toggle menu"
-                >
-                  {mobileMenuOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
-                </button>
               </div>
             </div>
-
-            {/* Mobile Menu Dropdown */}
-            {mobileMenuOpen && (
-              <div className="mt-2 sm:mt-3 animate-fade-in border-t border-white/5 pt-2 sm:pt-3 md:hidden">
-                <div className="flex flex-col gap-1">
-                  <div className="sm:hidden px-3 py-1">
-                    <LanguageToggle />
-                  </div>
-                  <a
-                    href="#features"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="rounded-lg px-3 py-2.5 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white"
-                  >
-                    {t('landing.features')}
-                  </a>
-                  <a
-                    href="#how-it-works"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="rounded-lg px-3 py-2.5 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white"
-                  >
-                    {t('landing.howItWorks')}
-                  </a>
-                  <a
-                    href="#testimonials"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="rounded-lg px-3 py-2.5 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white"
-                  >
-                    {t('landing.testimonials')}
-                  </a>
-                  <Link
-                    href="/login"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="rounded-lg px-3 py-2.5 text-sm font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white sm:hidden"
-                  >
-                    {t('landing.signInNav')}
-                  </Link>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-28 pb-20 sm:pt-36 sm:pb-28">
+      <section className="relative overflow-hidden pt-24 pb-16 sm:pt-36 sm:pb-28">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute left-1/4 top-1/4 h-[500px] w-[500px] rounded-full bg-emerald-500/5 blur-[120px]" />
           <div className="absolute bottom-1/4 right-1/4 h-[500px] w-[500px] rounded-full bg-blue-500/5 blur-[120px]" />
@@ -197,7 +142,7 @@ export default function Home() {
               <ChevronRight className="h-3 w-3 text-white/40" />
             </div>
 
-            <h1 className="animate-fade-in text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl" style={{ animationDelay: '0.1s' }}>
+            <h1 className="animate-fade-in text-2xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl" style={{ animationDelay: '0.1s' }}>
               {t('landing.heroTitle1')}{' '}
               <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-emerald-400 bg-clip-text text-transparent">
                 {t('landing.heroTitleHighlight1')}
@@ -209,43 +154,43 @@ export default function Home() {
               </span>
             </h1>
 
-            <p className="animate-fade-in mx-auto mt-6 max-w-2xl text-base leading-relaxed text-white/50 sm:text-lg" style={{ animationDelay: '0.2s' }}>
+            <p className="animate-fade-in mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/50 sm:mt-6 sm:text-lg" style={{ animationDelay: '0.2s' }}>
               {t('landing.heroSubtitle')}
             </p>
 
-            <div className="animate-fade-in mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4" style={{ animationDelay: '0.3s' }}>
+            <div className="animate-fade-in mt-8 flex flex-col items-center justify-center gap-3 sm:mt-10 sm:flex-row sm:gap-4" style={{ animationDelay: '0.3s' }}>
               <Link
                 href="/register?role=worker"
-                className="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition-all hover:shadow-xl hover:shadow-emerald-500/30 sm:w-auto"
+                className="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition-all hover:shadow-xl hover:shadow-emerald-500/30 sm:w-auto sm:px-6 sm:py-3.5"
               >
                 <span>{t('landing.imAWorker')}</span>
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link
                 href="/register?role=employer"
-                className="group relative flex w-full items-center justify-center gap-2 rounded-xl border border-blue-500/30 bg-blue-500/10 px-6 py-3.5 text-sm font-semibold text-blue-400 backdrop-blur-sm transition-all hover:border-blue-500/50 hover:bg-blue-500/15 sm:w-auto"
+                className="group relative flex w-full items-center justify-center gap-2 rounded-xl border border-blue-500/30 bg-blue-500/10 px-5 py-3 text-sm font-semibold text-blue-400 backdrop-blur-sm transition-all hover:border-blue-500/50 hover:bg-blue-500/15 sm:w-auto sm:px-6 sm:py-3.5"
               >
                 <span>{t('landing.imAnEmployer')}</span>
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
             </div>
 
-            <div className="animate-fade-in mt-10 flex flex-wrap items-center justify-center gap-6 text-white/30 sm:gap-8" style={{ animationDelay: '0.4s' }}>
+            <div className="animate-fade-in mt-8 grid grid-cols-2 items-center justify-center gap-3 text-white/30 sm:mt-10 sm:flex sm:flex-wrap sm:gap-8" style={{ animationDelay: '0.4s' }}>
               <div className="flex items-center gap-1.5">
-                <ShieldCheck className="h-4 w-4 text-emerald-500/50" />
-                <span className="text-xs font-medium sm:text-sm">{t('landing.cnicVerified')}</span>
+                <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-500/50" />
+                <span className="text-[11px] font-medium sm:text-sm">{t('landing.cnicVerified')}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <Wallet className="h-4 w-4 text-blue-500/50" />
-                <span className="text-xs font-medium sm:text-sm">{t('landing.securePayments')}</span>
+                <Wallet className="h-4 w-4 shrink-0 text-blue-500/50" />
+                <span className="text-[11px] font-medium sm:text-sm">{t('landing.securePayments')}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <ShieldAlert className="h-4 w-4 text-red-500/50" />
-                <span className="text-xs font-medium sm:text-sm">{t('landing.sosProtection')}</span>
+                <ShieldAlert className="h-4 w-4 shrink-0 text-red-500/50" />
+                <span className="text-[11px] font-medium sm:text-sm">{t('landing.sosProtection')}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <TrendingUp className="h-4 w-4 text-purple-500/50" />
-                <span className="text-xs font-medium sm:text-sm">{t('landing.smartMatching')}</span>
+                <TrendingUp className="h-4 w-4 shrink-0 text-purple-500/50" />
+                <span className="text-[11px] font-medium sm:text-sm">{t('landing.smartMatching')}</span>
               </div>
             </div>
           </div>
@@ -606,12 +551,12 @@ export default function Home() {
               &copy; {new Date().getFullYear()} MazdoorPing. {t('landing.allRightsReserved')}
             </p>
             <div className="flex gap-6">
-              <Link href="/privacy" className="text-xs text-white/30 transition-colors hover:text-white/60">
+              <a href="#" className="text-xs text-white/30 transition-colors hover:text-white/60">
                 {t('landing.privacyPolicy')}
-              </Link>
-              <Link href="/terms" className="text-xs text-white/30 transition-colors hover:text-white/60">
+              </a>
+              <a href="#" className="text-xs text-white/30 transition-colors hover:text-white/60">
                 {t('landing.termsOfService')}
-              </Link>
+              </a>
               <a href="#" className="text-xs text-white/30 transition-colors hover:text-white/60">
                 {t('landing.contact')}
               </a>
