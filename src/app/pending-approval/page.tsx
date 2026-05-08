@@ -26,11 +26,12 @@ export default function PendingApprovalPage() {
   };
 
   // If approved, redirect to appropriate dashboard
-  if (profile?.is_approved) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if ((profile as any)?.is_approved) {
     const redirectPath =
-      profile.role === 'worker' ? '/worker' :
-      profile.role === 'employer' ? '/employer' :
-      profile.role === 'admin' ? '/admin' : '/';
+      profile!.role === 'worker' ? '/worker' :
+      profile!.role === 'employer' ? '/employer' :
+      profile!.role === 'admin' ? '/admin' : '/';
     if (typeof window !== 'undefined') {
       window.location.href = redirectPath;
     }
@@ -163,12 +164,13 @@ export default function PendingApprovalPage() {
           )}
 
           {/* Rejection Reason */}
-          {profile?.rejection_reason && (
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {(profile as any)?.rejection_reason && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-6">
               <h3 className="text-sm font-medium text-red-400 mb-1">
                 {isUrdu ? 'مسترد کرنے کی وجہ' : 'Rejection Reason'}
               </h3>
-              <p className="text-xs text-red-300/70">{profile.rejection_reason}</p>
+              <p className="text-xs text-red-300/70">{(profile as any).rejection_reason}</p>
             </div>
           )}
 

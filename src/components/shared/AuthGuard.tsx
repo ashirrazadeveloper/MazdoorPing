@@ -21,7 +21,7 @@ const PROFILE_RETRY_INTERVAL = 2000; // Retry profile fetch every 2 seconds
  * - Profile can take a moment to load from Supabase, that's OK
  *
  * APPROVAL CHECK:
- * - If `profile.is_approved` is false and role is NOT admin → redirect to /pending-approval
+ * - If `profile!.is_approved` is false and role is NOT admin → redirect to /pending-approval
  * - Admin users bypass approval check
  * - Setup pages bypass approval check (user needs to complete setup first)
  */
@@ -106,7 +106,8 @@ export function AuthGuard({ children, allowedRole }: AuthGuardProps) {
     }
 
     // CASE 3: User exists, profile loaded, NOT admin, NOT approved → redirect to pending
-    if (profile && profile.role !== 'admin' && !profile.is_approved) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (profile && profile.role !== 'admin' && !(profile as any).is_approved) {
       // Allow setup pages to be accessed even without approval
       const isSetupPage = pathname.includes('/setup');
       const isPendingPage = pathname === '/pending-approval';
@@ -176,7 +177,8 @@ export function AuthGuard({ children, allowedRole }: AuthGuardProps) {
   }
 
   // Profile loaded, NOT admin, NOT approved, NOT on setup/pending page = redirecting to pending
-  if (profile && profile.role !== 'admin' && !profile.is_approved) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (profile && profile.role !== 'admin' && !(profile as any).is_approved) {
     const isSetupPage = pathname.includes('/setup');
     const isPendingPage = pathname === '/pending-approval';
     if (!isSetupPage && !isPendingPage) {

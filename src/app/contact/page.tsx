@@ -11,10 +11,6 @@ import {
   Send,
   Loader2,
   CheckCircle2,
-  Globe,
-  Facebook,
-  Instagram,
-  Twitter,
 } from 'lucide-react';
 import { useLanguageStore } from '@/store/language-store';
 import { LanguageToggle } from '@/components/shared/LanguageToggle';
@@ -67,9 +63,9 @@ const officeHours = [
 ];
 
 const socialLinks = [
-  { icon: Facebook, label: 'Facebook', href: '#' },
-  { icon: Instagram, label: 'Instagram', href: '#' },
-  { icon: Twitter, label: 'Twitter', href: '#' },
+  { label: 'Facebook', href: '#', color: 'hover:bg-blue-600/20 hover:text-blue-400 hover:border-blue-500/30' },
+  { label: 'Instagram', href: '#', color: 'hover:bg-pink-600/20 hover:text-pink-400 hover:border-pink-500/30' },
+  { label: 'Twitter / X', href: '#', color: 'hover:bg-white/10 hover:text-white hover:border-white/30' },
 ];
 
 export default function ContactPage() {
@@ -423,19 +419,16 @@ export default function ContactPage() {
             </p>
 
             <div className="mt-6 flex items-center justify-center gap-4">
-              {socialLinks.map((social) => {
-                const Icon = social.icon;
-                return (
-                  <a
-                    key={social.label}
-                    href={social.href}
-                    aria-label={social.label}
-                    className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] text-white/50 transition-all hover:border-white/20 hover:bg-white/[0.06] hover:text-white hover:-translate-y-1"
-                  >
-                    <Icon className="h-5 w-5" />
-                  </a>
-                );
-              })}
+              {socialLinks.map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  aria-label={social.label}
+                  className={`flex h-12 w-12 items-center justify-center rounded-xl border border-white/8 bg-white/[0.03] text-white/50 transition-all hover:-translate-y-1 ${social.color}`}
+                >
+                  <span className="text-sm font-bold">{social.label.charAt(0)}</span>
+                </a>
+              ))}
             </div>
           </div>
         </div>

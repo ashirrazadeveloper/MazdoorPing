@@ -144,7 +144,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             .select('*')
             .eq('id', session.user.id)
             .single();
-          profile = profData || null;
+          profile = (profData as unknown as Profile) || null;
         } catch {
           profile = null;
         }

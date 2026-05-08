@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-// Use service_role client to bypass RLS
-const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: { autoRefreshToken: false, persistSession: false },
-});
+// Lazy-init client to avoid build-time crashes when env vars are missing
+function getAdminClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  if (!supabaseUrl) throw new Error('SUPABASE_URL is not configured');
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const adminClient = getAdminClient();
     const body = await request.json();
     const { settings, category } = body;
 
@@ -43,6 +46,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
+    const adminClient = getAdminClient();
     const { data, error } = await adminClient
       .from('platform_settings')
       .select('*');
