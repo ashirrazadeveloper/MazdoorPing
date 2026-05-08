@@ -271,13 +271,16 @@ export default function EmployerManagementPage() {
           throw new Error(errData.error || 'Update failed');
         }
       } else {
-        const result = await supabase
-          .from('subscription_plans')
-          .insert(row);
-        error = result.error;
+        const result = await fetch('/api/admin/subscription-plans', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(row),
+        });
+        if (!result.ok) {
+          const errData = await result.json().catch(() => ({ error: 'Insert failed' }));
+          throw new Error(errData.error || 'Insert failed');
+        }
       }
-
-      if (error) throw error;
 
       // Update local state
       const updatedPlans = [...plans];

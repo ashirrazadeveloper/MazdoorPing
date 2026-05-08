@@ -89,6 +89,7 @@ export const translations: Translations = {
       adminSOSAlerts: 'SOS Alerts',
       adminSettings: 'Settings',
       adminNotifications: 'Notifications',
+      adminContentManagement: 'Content Management',
     },
     auth: {
       signIn: 'Sign In',
@@ -1339,6 +1340,7 @@ export const translations: Translations = {
       adminSOSAlerts: 'ایس او ایس الرٹ',
       adminSettings: 'سیٹنگز',
       adminNotifications: 'اطلاعات',
+      adminContentManagement: 'مواد کا انتظام',
     },
     auth: {
       signIn: 'لاگ ان',
