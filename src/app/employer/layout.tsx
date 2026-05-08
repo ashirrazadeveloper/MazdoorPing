@@ -3,7 +3,7 @@
 import { AuthGuard } from '@/components/shared/AuthGuard';
 import { MaintenanceGuard } from '@/components/shared/MaintenanceGuard';
 import { SectionLayout } from '@/components/layouts/SectionLayout';
-import { LayoutDashboard, PlusCircle, Search, ClipboardList, User, Bell, Heart, Wallet, MessageCircle, Bot, Calendar } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, Search, ClipboardList, User, Bell, Heart, Wallet, MessageCircle, Bot, Calendar, CreditCard } from 'lucide-react';
 
 const sidebarItems = [
   { label: 'Dashboard', labelKey: 'nav.employerDashboard', href: '/employer', icon: LayoutDashboard },
@@ -14,6 +14,7 @@ const sidebarItems = [
   { label: 'Worker Availability', labelKey: 'availability.title', href: '/employer/worker-availability', icon: Calendar },
   { label: 'AI Assistant', labelKey: 'aiChat.title', href: '/employer/ai-assistant', icon: Bot },
   { label: 'Wallet', labelKey: 'common.wallet', href: '/employer/wallet', icon: Wallet },
+  { label: 'Billing', labelKey: 'nav.employerBilling', href: '/employer/billing', icon: CreditCard },
   { label: 'Profile', labelKey: 'nav.employerProfile', href: '/employer/profile', icon: User },
   { label: 'Notifications', labelKey: 'nav.employerNotifications', href: '/employer/notifications', icon: Bell },
   { label: 'Favorites', labelKey: 'nav.employerFavorites', href: '/employer/favorites', icon: Heart },

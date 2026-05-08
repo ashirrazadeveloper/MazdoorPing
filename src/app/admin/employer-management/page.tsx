@@ -218,17 +218,18 @@ export default function EmployerManagementPage() {
   const handleSaveAll = async () => {
     setSaving(true);
     try {
-      const upserts = Object.entries(settingsMap).map(([key, value]) => ({
-        key,
-        value,
-        category: 'employer_management',
-      }));
+      const settings = Object.entries(settingsMap).map(([key, value]) => ({ key, value }));
 
-      const { error } = await supabase
-        .from('platform_settings')
-        .upsert(upserts, { onConflict: 'key' });
+      const res = await fetch('/api/admin/platform-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings, category: 'employer' }),
+      });
 
-      if (error) throw error;
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: 'Request failed' }));
+        throw new Error(errData.error || 'Save failed');
+      }
 
       setOriginalMap({ ...settingsMap });
       showToast(isUrdu ? 'ترتیبات محفوظ ہو گئیں' : 'Settings saved successfully', 'success');
@@ -260,11 +261,15 @@ export default function EmployerManagementPage() {
 
       let error;
       if (plan.id) {
-        const result = await supabase
-          .from('subscription_plans')
-          .update(row)
-          .eq('id', plan.id);
-        error = result.error;
+        const result = await fetch('/api/admin/subscription-plans', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: plan.id, ...row }),
+        });
+        if (!result.ok) {
+          const errData = await result.json().catch(() => ({ error: 'Update failed' }));
+          throw new Error(errData.error || 'Update failed');
+        }
       } else {
         const result = await supabase
           .from('subscription_plans')

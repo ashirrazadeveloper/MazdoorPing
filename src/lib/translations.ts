@@ -72,6 +72,7 @@ export const translations: Translations = {
       employerFindWorkers: 'Find Workers',
       employerMyBookings: 'My Bookings',
       employerProfile: 'Profile',
+      employerBilling: 'Billing',
       employerNotifications: 'Notifications',
       employerFavorites: 'Favorites',
       // Admin
@@ -1322,6 +1323,7 @@ export const translations: Translations = {
       employerFindWorkers: 'مزدور تلاش کریں',
       employerMyBookings: 'میری بکنگز',
       employerProfile: 'پروفائل',
+      employerBilling: 'بلنگ',
       employerNotifications: 'اطلاعات',
       employerFavorites: 'پسندیدہ',
       adminDashboard: 'ڈیش بورڈ',

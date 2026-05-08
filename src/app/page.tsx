@@ -73,9 +73,24 @@ export default function Home() {
   ];
 
   const footerLinks = {
-    quickLinks: [t('landing.aboutUs'), t('landing.howItWorksLink'), t('landing.featuresLink'), t('landing.pricing')],
-    forWorkers: [t('landing.findJobs'), t('landing.createProfile'), t('landing.getVerified'), t('landing.workerSafety')],
-    forEmployers: [t('landing.postAJob'), t('landing.findWorkersLink'), t('landing.manageProjects'), t('landing.billing')],
+    quickLinks: [
+      { label: t('landing.aboutUs'), href: '/about' },
+      { label: t('landing.howItWorksLink'), href: '/how-it-works' },
+      { label: t('landing.featuresLink'), href: '/features' },
+      { label: t('landing.pricing'), href: '/pricing' },
+    ],
+    forWorkers: [
+      { label: t('landing.findJobs'), href: '/worker/jobs' },
+      { label: t('landing.createProfile'), href: '/worker/profile' },
+      { label: t('landing.getVerified'), href: '/worker/profile' },
+      { label: t('landing.workerSafety'), href: '/features#safety' },
+    ],
+    forEmployers: [
+      { label: t('landing.postAJob'), href: '/employer/post-job' },
+      { label: t('landing.findWorkersLink'), href: '/employer/find-workers' },
+      { label: t('landing.manageProjects'), href: '/employer/my-bookings' },
+      { label: t('landing.billing'), href: '/employer/billing' },
+    ],
   };
 
   return (
@@ -510,10 +525,10 @@ export default function Home() {
               <h4 className="mb-4 text-sm font-semibold text-white">{t('landing.quickLinks')}</h4>
               <ul className="space-y-2.5">
                 {footerLinks.quickLinks.map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-sm text-white/40 transition-colors hover:text-white/70">
-                      {item}
-                    </a>
+                  <li key={item.href}>
+                    <Link href={item.href} className="text-sm text-white/40 transition-colors hover:text-white/70">
+                      {item.label}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -523,10 +538,10 @@ export default function Home() {
               <h4 className="mb-4 text-sm font-semibold text-white">{t('landing.forWorkers')}</h4>
               <ul className="space-y-2.5">
                 {footerLinks.forWorkers.map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-sm text-white/40 transition-colors hover:text-white/70">
-                      {item}
-                    </a>
+                  <li key={item.href}>
+                    <Link href={item.href} className="text-sm text-white/40 transition-colors hover:text-white/70">
+                      {item.label}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -536,10 +551,10 @@ export default function Home() {
               <h4 className="mb-4 text-sm font-semibold text-white">{t('landing.forEmployers')}</h4>
               <ul className="space-y-2.5">
                 {footerLinks.forEmployers.map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-sm text-white/40 transition-colors hover:text-white/70">
-                      {item}
-                    </a>
+                  <li key={item.href}>
+                    <Link href={item.href} className="text-sm text-white/40 transition-colors hover:text-white/70">
+                      {item.label}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -551,15 +566,15 @@ export default function Home() {
               &copy; {new Date().getFullYear()} MazdoorPing. {t('landing.allRightsReserved')}
             </p>
             <div className="flex gap-6">
-              <a href="#" className="text-xs text-white/30 transition-colors hover:text-white/60">
+              <Link href="/privacy" className="text-xs text-white/30 transition-colors hover:text-white/60">
                 {t('landing.privacyPolicy')}
-              </a>
-              <a href="#" className="text-xs text-white/30 transition-colors hover:text-white/60">
+              </Link>
+              <Link href="/terms" className="text-xs text-white/30 transition-colors hover:text-white/60">
                 {t('landing.termsOfService')}
-              </a>
-              <a href="#" className="text-xs text-white/30 transition-colors hover:text-white/60">
+              </Link>
+              <Link href="/contact" className="text-xs text-white/30 transition-colors hover:text-white/60">
                 {t('landing.contact')}
-              </a>
+              </Link>
             </div>
           </div>
         </div>

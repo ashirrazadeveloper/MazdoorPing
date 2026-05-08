@@ -143,17 +143,18 @@ export default function WorkerManagementPage() {
   const handleSaveAll = async () => {
     setSaving(true);
     try {
-      const upserts = Object.entries(settingsMap).map(([key, value]) => ({
-        key,
-        value,
-        category: 'worker_management',
-      }));
+      const settings = Object.entries(settingsMap).map(([key, value]) => ({ key, value }));
 
-      const { error } = await supabase
-        .from('platform_settings')
-        .upsert(upserts, { onConflict: 'key' });
+      const res = await fetch('/api/admin/platform-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings, category: 'worker' }),
+      });
 
-      if (error) throw error;
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: 'Request failed' }));
+        throw new Error(errData.error || 'Save failed');
+      }
 
       setOriginalMap({ ...settingsMap });
       showToast(isUrdu ? 'ترتیبات محفوظ ہو گئیں' : 'Settings saved successfully', 'success');
