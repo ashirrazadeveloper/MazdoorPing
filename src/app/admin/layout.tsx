@@ -2,10 +2,11 @@
 
 import { AuthGuard } from '@/components/shared/AuthGuard';
 import { SectionLayout } from '@/components/layouts/SectionLayout';
-import { LayoutDashboard, Users, Building2, Briefcase, Tag, DollarSign, AlertTriangle, Settings, ShieldCheck, Bell, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Users, Building2, Briefcase, Tag, DollarSign, AlertTriangle, Settings, ShieldCheck, Bell, BarChart3, UserCheck } from 'lucide-react';
 
 const sidebarItems = [
   { label: 'Dashboard', labelKey: 'nav.adminDashboard', href: '/admin', icon: LayoutDashboard },
+  { label: 'User Approvals', labelKey: 'nav.adminUserApprovals', href: '/admin/user-approvals', icon: UserCheck },
   { label: 'Workers', labelKey: 'nav.adminWorkers', href: '/admin/workers', icon: Users },
   { label: 'Verification', labelKey: 'nav.adminVerification', href: '/admin/verification', icon: ShieldCheck },
   { label: 'Employers', labelKey: 'nav.adminEmployers', href: '/admin/employers', icon: Building2 },
@@ -20,7 +21,7 @@ const sidebarItems = [
 
 const bottomNavItems = [
   { label: 'Home', labelKey: 'common.home', href: '/admin', icon: LayoutDashboard },
-  { label: 'Verify', labelKey: 'nav.adminVerification', href: '/admin/verification', icon: ShieldCheck },
+  { label: 'Approvals', labelKey: 'nav.adminUserApprovals', href: '/admin/user-approvals', icon: UserCheck },
   { label: 'Workers', labelKey: 'nav.adminWorkers', href: '/admin/workers', icon: Users },
   { label: 'Alerts', labelKey: 'nav.adminSOSAlerts', href: '/admin/sos-alerts', icon: AlertTriangle },
   { label: 'Settings', labelKey: 'nav.adminSettings', href: '/admin/settings', icon: Settings },

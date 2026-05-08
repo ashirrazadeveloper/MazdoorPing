@@ -15,6 +15,8 @@ export interface Profile {
   phone: string;
   role: UserRole;
   avatar_url: string | null;
+  is_approved: boolean;
+  rejection_reason: string | null;
   created_at: string;
   updated_at: string;
 }

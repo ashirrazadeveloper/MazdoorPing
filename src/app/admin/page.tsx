@@ -6,14 +6,14 @@ import { formatCurrency, timeAgo } from '@/lib/utils';
 import { StatCard } from '@/components/shared/StatCard';
 import {
   Users, UserCheck, Clock, Building2, Briefcase,
-  AlertTriangle, ArrowRight, TrendingUp,
+  AlertTriangle, ArrowRight, TrendingUp, CheckCircle2,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts';
-import type { DashboardStats, Worker, SOSAlert } from '@/types';
+import type { DashboardStats, Worker, SOSAlert, Profile } from '@/types';
 import { useLanguageStore } from '@/store/language-store';
 
 const workerRegistrationData = [
@@ -47,7 +47,7 @@ const revenueData = [
 ];
 
 export default function AdminDashboard() {
-  const { t } = useLanguageStore();
+  const { t, language } = useLanguageStore();
   const [stats, setStats] = useState<DashboardStats>({
     totalWorkers: 0,
     activeWorkers: 0,
@@ -61,12 +61,13 @@ export default function AdminDashboard() {
   });
   const [pendingWorkers, setPendingWorkers] = useState<Worker[]>([]);
   const [activeSOSAlerts, setActiveSOSAlerts] = useState<SOSAlert[]>([]);
+  const [pendingApprovals, setPendingApprovals] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        const [workersCount, employersCount, jobsCount, sosCount, pendingRes, sosRes, transactionsRes] =
+        const [workersCount, employersCount, jobsCount, sosCount, pendingRes, sosRes, transactionsRes, approvalsRes] =
           await Promise.all([
             supabase.from('workers').select('status'),
             supabase.from('employers').select('id', { count: 'exact', head: true }),
@@ -88,6 +89,14 @@ export default function AdminDashboard() {
               .from('transactions')
               .select('amount')
               .eq('status', 'completed'),
+            supabase
+              .from('profiles')
+              .select('*')
+              .eq('is_approved', false)
+              .is('rejection_reason', null)
+              .neq('role', 'admin')
+              .order('created_at', { ascending: false })
+              .limit(5),
           ]);
 
         const allWorkers = workersCount.data || [];
@@ -120,6 +129,7 @@ export default function AdminDashboard() {
 
         if (pendingRes.data) setPendingWorkers(pendingRes.data as Worker[]);
         if (sosRes.data) setActiveSOSAlerts(sosRes.data as SOSAlert[]);
+        if (approvalsRes.data) setPendingApprovals(approvalsRes.data as Profile[]);
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
       } finally {
@@ -233,6 +243,71 @@ export default function AdminDashboard() {
           changeType={stats.activeSOS > 0 ? 'down' : 'up'}
         />
       </div>
+
+      {/* Pending User Approvals - NEW */}
+      {pendingApprovals.length > 0 && (
+        <div className="glass-card p-6 border border-amber-500/20">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <UserCheck className="w-5 h-5 text-amber-400" />
+              <h2 className="text-lg font-semibold text-white">
+                {language === 'ur' ? 'منظوری کا منتظر صارف' : 'Pending User Approvals'}
+              </h2>
+              <span className="bg-amber-500/20 text-amber-400 text-xs font-bold px-2 py-0.5 rounded-full">
+                {pendingApprovals.length}
+              </span>
+            </div>
+            <Link
+              href="/admin/user-approvals"
+              className="flex items-center gap-1 text-sm text-orange-400 hover:text-orange-300 transition-colors"
+            >
+              {language === 'ur' ? 'سب دیکھیں' : 'View All'} <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {pendingApprovals.map((p) => (
+              <div key={p.id} className="flex items-center gap-4 p-3 rounded-xl bg-amber-500/5 border border-amber-500/10 hover:bg-amber-500/10 transition-all">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 text-sm font-bold ${
+                  p.role === 'worker' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'
+                }`}>
+                  {p.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-medium text-white truncate">{p.full_name || 'Unknown'}</h3>
+                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full shrink-0 ${
+                      p.role === 'worker' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-blue-500/15 text-blue-400'
+                    }`}>
+                      {p.role}
+                    </span>
+                  </div>
+                  <p className="text-xs text-white/40 mt-0.5">{p.email}</p>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={async () => {
+                      await supabase.from('profiles').update({ is_approved: true }).eq('id', p.id);
+                      if (p.role === 'worker') await supabase.from('workers').update({ status: 'active' }).eq('user_id', p.id);
+                      setPendingApprovals(prev => prev.filter(u => u.id !== p.id));
+                    }}
+                    className="p-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-all"
+                    title="Approve"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                  </button>
+                  <Link
+                    href="/admin/user-approvals"
+                    className="p-2 rounded-lg hover:bg-white/10 text-white/40 hover:text-white transition-all"
+                    title="View"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Revenue Chart */}
       <div className="glass-card p-6">

@@ -19,6 +19,11 @@ const PROFILE_RETRY_INTERVAL = 2000; // Retry profile fetch every 2 seconds
  * - If `user` exists → user IS authenticated → wait for profile
  * - If `user` is null → user is NOT authenticated → redirect to login
  * - Profile can take a moment to load from Supabase, that's OK
+ *
+ * APPROVAL CHECK:
+ * - If `profile.is_approved` is false and role is NOT admin → redirect to /pending-approval
+ * - Admin users bypass approval check
+ * - Setup pages bypass approval check (user needs to complete setup first)
  */
 export function AuthGuard({ children, allowedRole }: AuthGuardProps) {
   const { user, profile, initialized, fetchProfiles } = useAuthStore();
@@ -99,6 +104,18 @@ export function AuthGuard({ children, allowedRole }: AuthGuardProps) {
       window.location.href = redirectPath;
       return;
     }
+
+    // CASE 3: User exists, profile loaded, NOT admin, NOT approved → redirect to pending
+    if (profile && profile.role !== 'admin' && !profile.is_approved) {
+      // Allow setup pages to be accessed even without approval
+      const isSetupPage = pathname.includes('/setup');
+      const isPendingPage = pathname === '/pending-approval';
+      if (!isSetupPage && !isPendingPage) {
+        redirectedRef.current = true;
+        window.location.href = '/pending-approval';
+        return;
+      }
+    }
   }, [mounted, initialized, user, profile, allowedRole, pathname]);
 
   // Don't render until client-side hydration
@@ -158,7 +175,22 @@ export function AuthGuard({ children, allowedRole }: AuthGuardProps) {
     );
   }
 
-  // All good - user authenticated with correct role
-  // OR profile timed out but user is valid - let them through anyway
+  // Profile loaded, NOT admin, NOT approved, NOT on setup/pending page = redirecting to pending
+  if (profile && profile.role !== 'admin' && !profile.is_approved) {
+    const isSetupPage = pathname.includes('/setup');
+    const isPendingPage = pathname === '/pending-approval';
+    if (!isSetupPage && !isPendingPage) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-mesh">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-8 h-8 border-2 border-white/10 border-t-amber-500 rounded-full animate-spin" />
+            <p className="text-white/50 text-sm">Waiting for admin approval...</p>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  // All good - user authenticated with correct role and approved (or admin/setup/pending page)
   return <>{children}</>;
 }

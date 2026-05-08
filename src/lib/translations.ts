@@ -76,6 +76,7 @@ export const translations: Translations = {
       employerFavorites: 'Favorites',
       // Admin
       adminDashboard: 'Dashboard',
+      adminUserApprovals: 'User Approvals',
       adminWorkers: 'Workers',
       adminVerification: 'Verification',
       adminEmployers: 'Employers',
@@ -1322,6 +1323,7 @@ export const translations: Translations = {
       employerNotifications: 'اطلاعات',
       employerFavorites: 'پسندیدہ',
       adminDashboard: 'ڈیش بورڈ',
+      adminUserApprovals: 'صارف منظوری',
       adminWorkers: 'مزدور',
       adminVerification: 'تصدیق',
       adminEmployers: 'آجرو',

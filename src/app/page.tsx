@@ -86,12 +86,12 @@ export default function Home() {
     <div className="min-h-screen">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 animate-fade-in">
-        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
-          <div className="glass mt-3 rounded-2xl px-3 py-3 sm:px-6">
-            <div className="flex items-center justify-between">
-              <Link href="/" className="flex items-center gap-2 shrink-0">
-                <Image src="/logo.png" alt="MazdoorPing" width={32} height={32} className="h-8 w-8 rounded-lg object-cover sm:h-9 sm:w-9" />
-                <span className="text-base font-bold text-white sm:text-lg">
+        <div className="mx-auto max-w-7xl px-2 sm:px-4 lg:px-8">
+          <div className="glass mt-2 sm:mt-3 rounded-xl sm:rounded-2xl px-2 sm:px-6 py-2 sm:py-3">
+            <div className="flex items-center justify-between gap-1">
+              <Link href="/" className="flex items-center gap-1.5 shrink-0">
+                <Image src="/logo.png" alt="MazdoorPing" width={32} height={32} className="h-7 w-7 sm:h-9 sm:w-9 rounded-lg object-cover" />
+                <span className="text-sm font-bold text-white sm:text-lg">
                   Mazdoor<span className="text-emerald-400">Ping</span>
                 </span>
               </Link>
@@ -109,7 +109,7 @@ export default function Home() {
                 </a>
               </div>
 
-              <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-1.5 sm:gap-3">
                 <LanguageToggle />
                 <Link
                   href="/login"
@@ -119,16 +119,15 @@ export default function Home() {
                 </Link>
                 <Link
                   href="/register"
-                  className="glass-button rounded-lg px-3 py-2 text-sm sm:px-4"
+                  className="glass-button rounded-lg px-3 py-2 text-xs sm:text-sm sm:px-4"
                 >
-                  <span className="hidden sm:inline">{t('landing.getStartedNav')}</span>
-                  <span className="sm:hidden text-xs">{t('landing.getStartedNav')}</span>
+                  {t('landing.getStartedNav')}
                 </Link>
 
                 {/* Mobile Hamburger */}
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="ml-1 flex items-center justify-center rounded-lg p-2 text-white/60 transition-colors hover:bg-white/5 hover:text-white md:hidden"
+                  className="flex items-center justify-center rounded-lg p-1.5 sm:p-2 text-white/60 transition-colors hover:bg-white/5 hover:text-white md:hidden min-w-[36px] min-h-[36px] sm:min-w-[44px] sm:min-h-[44px]"
                   aria-label="Toggle menu"
                 >
                   {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -138,7 +137,7 @@ export default function Home() {
 
             {/* Mobile Menu Dropdown */}
             {mobileMenuOpen && (
-              <div className="mt-3 animate-fade-in border-t border-white/5 pt-3 md:hidden">
+              <div className="mt-2 sm:mt-3 animate-fade-in border-t border-white/5 pt-2 sm:pt-3 md:hidden">
                 <div className="flex flex-col gap-1">
                   <a
                     href="#features"
