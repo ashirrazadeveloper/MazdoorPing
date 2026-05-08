@@ -49,6 +49,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Content array is required' }, { status: 400 });
     }
 
+    // Map frontend content types to database-allowed values
+    // Frontend uses: 'text', 'textarea', 'url'
+    // DB CHECK allows: 'text', 'richtext', 'html', 'json'
+    const typeMap: Record<string, string> = {
+      text: 'text',
+      textarea: 'text',
+      url: 'text',
+      richtext: 'richtext',
+      html: 'html',
+      json: 'json',
+    };
+
     const rows = content.map((item: {
       page_slug: string;
       section_key: string;
@@ -61,7 +73,7 @@ export async function POST(request: NextRequest) {
       section_key: item.section_key,
       content_en: item.content_en,
       content_ur: item.content_ur,
-      content_type: item.content_type || 'text',
+      content_type: typeMap[item.content_type || 'text'] || 'text',
       sort_order: item.sort_order ?? 0,
     }));
 

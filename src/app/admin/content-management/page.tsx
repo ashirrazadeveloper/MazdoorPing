@@ -229,11 +229,19 @@ const SECTION_FIELDS: Record<string, SectionField[]> = {
 const DEFAULT_CONTENT: Record<string, Record<string, { en: string; ur: string }>> = {
   general: {
     company_name: { en: 'MazdoorPing', ur: 'مزدور پنگ' },
-    company_tagline: { en: "Pakistan''s Trusted Platform for Skilled Workers", ur: 'پاکستان کے ماہر مزدوروں کے لیے قابل اعتماد پلیٹ فارم' },
+    company_tagline: { en: "Pakistan's Trusted Platform for Skilled Workers", ur: 'پاکستان کے ماہر مزدوروں کے لیے قابل اعتماد پلیٹ فارم' },
+    hero_title_en: { en: 'Find Trusted Skilled Workers Near You', ur: 'اپنے قریب قابل اعتماد ماہر مزدور تلاش کریں' },
+    hero_title_ur: { en: 'اپنے قریب قابل اعتماد ماہر مزدور تلاش کریں', ur: 'اپنے قریب قابل اعتماد ماہر مزدور تلاش کریں' },
+    hero_subtitle_en: { en: 'Connect with verified electricians, plumbers, carpenters, painters, AC technicians and hundreds of skilled professionals across Pakistan.', ur: 'پاکستان بھر کے تصدیق شدہ الیکٹریشن، پلمبر، درودگر، پینٹر، اے سی تکنیشن اور سینکڑوں ماہر پیشہ ور افراد سے جڑیں۔' },
+    hero_subtitle_ur: { en: 'پاکستان بھر کے تصدیق شدہ الیکٹریشن، پلمبر، درودگر، پینٹر، اے سی تکنیشن اور سینکڑوں ماہر پیشہ ور افراد سے جڑیں۔', ur: 'پاکستان بھر کے تصدیق شدہ الیکٹریشن، پلمبر، درودگر، پینٹر، اے سی تکنیشن اور سینکڑوں ماہر پیشہ ور افراد سے جڑیں۔' },
+    footer_description_en: { en: 'MazdoorPing is Pakistan\'s leading platform connecting skilled workers with employers. Find trusted professionals for all your home and business needs.', ur: 'مزدور پنگ پاکستان کی سرکردہ پلیٹ فارم ہے جو ماہر مزدوروں کو آجروں سے جوڑتی ہے۔ اپنی تمام گھریلو اور کاروباری ضروریات کے لیے قابل اعتماد پیشہ ور تلاش کریں۔' },
+    footer_description_ur: { en: 'مزدور پنگ پاکستان کی سرکردہ پلیٹ فارم ہے جو ماہر مزدوروں کو آجروں سے جوڑتی ہے۔', ur: 'مزدور پنگ پاکستان کی سرکردہ پلیٹ فارم ہے جو ماہر مزدوروں کو آجروں سے جوڑتی ہے۔ اپنی تمام گھریلو اور کاروباری ضروریات کے لیے قابل اعتماد پیشہ ور تلاش کریں۔' },
     contact_email: { en: 'support@mazdoorping.com', ur: 'support@mazdoorping.com' },
     contact_phone: { en: '+92-300-1234567', ur: '+92-300-1234567' },
     contact_address_en: { en: 'Office 42, Blue Area, Jinnah Avenue, Islamabad, Pakistan', ur: 'آفس 42، بلیو ایریا، جناح ایونیو، اسلام آباد، پاکستان' },
+    contact_address_ur: { en: 'آفس 42، بلیو ایریا، جناح ایونیو، اسلام آباد، پاکستان', ur: 'آفس 42، بلیو ایریا، جناح ایونیو، اسلام آباد، پاکستان' },
     working_hours_en: { en: 'Mon - Sat: 9:00 AM - 6:00 PM', ur: 'پیر - ہفتہ: صبح 9:00 بجے - شام 6:00 بجے' },
+    working_hours_ur: { en: 'پیر - ہفتہ: صبح 9:00 بجے - شام 6:00 بجے', ur: 'پیر - ہفتہ: صبح 9:00 بجے - شام 6:00 بجے' },
     facebook_url: { en: 'https://facebook.com/mazdoorping', ur: 'https://facebook.com/mazdoorping' },
     instagram_url: { en: 'https://instagram.com/mazdoorping', ur: 'https://instagram.com/mazdoorping' },
     twitter_url: { en: 'https://twitter.com/mazdoorping', ur: 'https://twitter.com/mazdoorping' },
@@ -485,13 +493,19 @@ export default function ContentManagementPage() {
           };
         });
       }
-      // Merge with defaults so pages are never empty
+      // Merge: use DB data where available, fill defaults, and ensure ALL fields from SECTION_FIELDS exist
       const defaults = DEFAULT_CONTENT[pageSlug] || {};
+      const fields = SECTION_FIELDS[pageSlug] || [];
       const merged: Record<string, { en: string; ur: string; id?: string }> = {};
-      for (const key of Object.keys(defaults)) {
-        merged[key] = map[key] && (map[key].en || map[key].ur)
-          ? map[key]
-          : { en: defaults[key].en, ur: defaults[key].ur };
+      for (const f of fields) {
+        const key = f.section_key;
+        if (map[key] && (map[key].en || map[key].ur)) {
+          merged[key] = map[key];
+        } else if (defaults[key]) {
+          merged[key] = { en: defaults[key].en, ur: defaults[key].ur };
+        } else {
+          merged[key] = { en: '', ur: '' };
+        }
       }
       setContentMap(merged);
       setOriginalMap(JSON.parse(JSON.stringify(merged)));
