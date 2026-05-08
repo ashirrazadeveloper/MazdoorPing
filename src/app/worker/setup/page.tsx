@@ -644,16 +644,25 @@ export default function WorkerSetupPage() {
     switch (step) {
       case 1:
         if (!formData.fullName.trim()) { setMessage({ type: 'error', text: 'Please enter your full name' }); return false; }
+        if (!formData.city) { setMessage({ type: 'error', text: 'Please select your city' }); return false; }
+        if (!formData.province) { setMessage({ type: 'error', text: 'Please select your province' }); return false; }
         if (formData.bio.length > 0 && formData.bio.length < 50) { setMessage({ type: 'error', text: 'Bio must be at least 50 characters' }); return false; }
         return true;
       case 2:
-        if (formData.cnicNumber && !isValidCnic(formData.cnicNumber)) { setMessage({ type: 'error', text: 'Please enter a valid CNIC number (XXXXX-XXXXXXX-X)' }); return false; }
+        if (!formData.cnicNumber.trim()) { setMessage({ type: 'error', text: 'CNIC number is required for verification' }); return false; }
+        if (!isValidCnic(formData.cnicNumber)) { setMessage({ type: 'error', text: 'Please enter a valid CNIC number (XXXXX-XXXXXXX-X)' }); return false; }
+        if (!formData.cnicFrontPreview) { setMessage({ type: 'error', text: 'CNIC front image is required' }); return false; }
+        if (!formData.cnicBackPreview) { setMessage({ type: 'error', text: 'CNIC back image is required' }); return false; }
         return true;
       case 3:
+        if (!formData.primarySkill) { setMessage({ type: 'error', text: 'Please select a primary skill' }); return false; }
         return true;
       case 4:
+        if (!formData.latitude || !formData.longitude) { setMessage({ type: 'error', text: 'Please set your location on the map' }); return false; }
         return true;
       case 5:
+        if (!formData.bankName.trim()) { setMessage({ type: 'error', text: 'Bank name is required for payments' }); return false; }
+        if (!formData.accountNumber.trim()) { setMessage({ type: 'error', text: 'Account number is required for payments' }); return false; }
         return true;
       case 6:
         if (!formData.termsAccepted) { setMessage({ type: 'error', text: 'Please accept the Terms & Conditions' }); return false; }
@@ -680,9 +689,9 @@ export default function WorkerSetupPage() {
     }
   }, [currentStep, validateStep, saveStep1, saveStep2, saveStep3, saveStep4]);
 
-  // Skip handler
+  // Skip handler — steps 1, 2, 3 are mandatory and cannot be skipped
   const handleSkip = useCallback(() => {
-    if (currentStep === 1) return; // Cannot skip step 1
+    if (currentStep === 1 || currentStep === 2 || currentStep === 3) return;
     setCurrentStep((s) => Math.min(s + 1, 6));
     setMessage(null);
   }, [currentStep]);
@@ -701,10 +710,28 @@ export default function WorkerSetupPage() {
     }
   }, [currentStep]);
 
-  // Final submit
+  // Final submit — comprehensive check before submitting
   const handleSubmit = useCallback(async () => {
-    if (!validateStep(5)) return;
+    if (!validateStep(6)) return;
     if (!workerProfile?.user_id) return;
+
+    // Collect all missing required fields
+    const missing: string[] = [];
+    if (!formData.fullName.trim()) missing.push('Full name');
+    if (!formData.city) missing.push('City');
+    if (!formData.province) missing.push('Province');
+    if (!formData.cnicNumber.trim() || !isValidCnic(formData.cnicNumber)) missing.push('Valid CNIC number');
+    if (!formData.cnicFrontPreview) missing.push('CNIC front image');
+    if (!formData.cnicBackPreview) missing.push('CNIC back image');
+    if (!formData.primarySkill) missing.push('Primary skill');
+    if (!formData.latitude || !formData.longitude) missing.push('Location');
+    if (!formData.bankName.trim()) missing.push('Bank name');
+    if (!formData.accountNumber.trim()) missing.push('Account number');
+
+    if (missing.length > 0) {
+      setMessage({ type: 'error', text: `Required fields missing: ${missing.join(', ')}. Please complete all steps before submitting.` });
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -742,9 +769,10 @@ export default function WorkerSetupPage() {
   // Step-specific completeness check for review
   const stepCompleteness = useMemo(() => ({
     1: !!(formData.fullName && formData.city && formData.province),
-    2: !!(formData.cnicNumber && formData.cnicFrontPreview && formData.cnicBackPreview),
+    2: !!(formData.cnicNumber && isValidCnic(formData.cnicNumber) && formData.cnicFrontPreview && formData.cnicBackPreview),
     3: !!(formData.primarySkill),
     4: !!(formData.latitude && formData.longitude),
+    5: !!(formData.bankName && formData.accountNumber),
   }), [formData]);
 
   // ─── Loading State ──────────────────────────────────────────────────────────
@@ -1371,9 +1399,9 @@ export default function WorkerSetupPage() {
                 {formData.bio && (
                   <p className="text-xs text-white/50 mt-2 line-clamp-2">{formData.bio}</p>
                 )}
-                <div className={`flex items-center gap-1.5 text-xs ${stepCompleteness[1] ? 'text-emerald-400' : 'text-yellow-400'}`}>
+                <div className={`flex items-center gap-1.5 text-xs ${stepCompleteness[1] ? 'text-emerald-400' : 'text-red-400'}`}>
                   {stepCompleteness[1] ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
-                  {stepCompleteness[1] ? 'Complete' : 'Incomplete — name, city, and province are recommended'}
+                  {stepCompleteness[1] ? 'Complete' : 'Required — name, city, and province must be filled'}
                 </div>
               </div>
 
@@ -1412,9 +1440,9 @@ export default function WorkerSetupPage() {
                     </div>
                   </div>
                 </div>
-                <div className={`flex items-center gap-1.5 text-xs ${stepCompleteness[2] ? 'text-emerald-400' : 'text-yellow-400'}`}>
+                <div className={`flex items-center gap-1.5 text-xs ${stepCompleteness[2] ? 'text-emerald-400' : 'text-red-400'}`}>
                   {stepCompleteness[2] ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
-                  {stepCompleteness[2] ? 'Complete' : 'Incomplete — CNIC helps speed up verification'}
+                  {stepCompleteness[2] ? 'Complete' : 'Required — CNIC number and both images are mandatory for verification'}
                 </div>
               </div>
 
@@ -1446,9 +1474,9 @@ export default function WorkerSetupPage() {
                     <p><span className="text-white/30">Tools:</span> <span className="text-white/70">{formData.tools.join(', ')}</span></p>
                   )}
                 </div>
-                <div className={`flex items-center gap-1.5 text-xs ${stepCompleteness[3] ? 'text-emerald-400' : 'text-yellow-400'}`}>
+                <div className={`flex items-center gap-1.5 text-xs ${stepCompleteness[3] ? 'text-emerald-400' : 'text-red-400'}`}>
                   {stepCompleteness[3] ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
-                  {stepCompleteness[3] ? 'Complete' : 'Incomplete — select a primary skill'}
+                  {stepCompleteness[3] ? 'Complete' : 'Required — select a primary skill'}
                 </div>
               </div>
 
@@ -1474,9 +1502,9 @@ export default function WorkerSetupPage() {
                     <p className="text-white/30">Location not set</p>
                   )}
                 </div>
-                <div className={`flex items-center gap-1.5 text-xs ${stepCompleteness[4] ? 'text-emerald-400' : 'text-yellow-400'}`}>
+                <div className={`flex items-center gap-1.5 text-xs ${stepCompleteness[4] ? 'text-emerald-400' : 'text-red-400'}`}>
                   {stepCompleteness[4] ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
-                  {stepCompleteness[4] ? 'Complete' : 'Incomplete — helps employers find you'}
+                  {stepCompleteness[4] ? 'Complete' : 'Required — set your location on the map'}
                 </div>
               </div>
 
@@ -1509,9 +1537,9 @@ export default function WorkerSetupPage() {
                     <p className="text-white/70">{formData.accountTitle || '—'}</p>
                   </div>
                 </div>
-                <div className={`flex items-center gap-1.5 text-xs ${formData.bankName ? 'text-emerald-400' : 'text-yellow-400'}`}>
-                  {formData.bankName ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
-                  {formData.bankName ? 'Complete' : 'Incomplete — needed for withdrawals'}
+                <div className={`flex items-center gap-1.5 text-xs ${stepCompleteness[5] ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {stepCompleteness[5] ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                  {stepCompleteness[5] ? 'Complete' : 'Required — bank details needed for payments'}
                 </div>
               </div>
 
@@ -1554,7 +1582,7 @@ export default function WorkerSetupPage() {
           </button>
 
           <div className="flex items-center gap-3">
-            {currentStep > 1 && currentStep < 6 && (
+            {currentStep > 3 && currentStep < 6 && (
               <button
                 onClick={handleSkip}
                 className="px-5 py-2.5 rounded-xl text-white/40 hover:text-white/60 hover:bg-white/5 transition-all text-sm font-medium min-h-[44px]"

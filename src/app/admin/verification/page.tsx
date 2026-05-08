@@ -6,7 +6,8 @@ import { cn, formatDate, timeAgo, getInitials } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
 import {
   Search, ShieldCheck, Eye, X, CheckCircle, XCircle,
-  Phone, Mail, Clock, FileWarning,
+  Phone, Mail, Clock, FileWarning, User, MapPin, Calendar,
+  Building2, Briefcase, Info, Navigation,
 } from 'lucide-react';
 import type { Worker, WorkerSkill } from '@/types';
 import { useLanguageStore } from '@/store/language-store';
@@ -32,6 +33,7 @@ export default function VerificationPage() {
   const [rejectWorker, setRejectWorker] = useState<WorkerWithProfile | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [cnicViewer, setCnicViewer] = useState<CnicViewer>(null);
+  const [detailWorker, setDetailWorker] = useState<WorkerWithProfile | null>(null);
 
   const showToast = useCallback((message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -403,6 +405,13 @@ export default function VerificationPage() {
               {/* Actions */}
               <div className="flex gap-2 pt-1">
                 <button
+                  onClick={() => setDetailWorker(worker)}
+                  className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/15 font-medium text-xs transition-all"
+                >
+                  <Info className="w-3.5 h-3.5" />
+                  Details
+                </button>
+                <button
                   onClick={() => handleApprove(worker)}
                   disabled={actionLoading === worker.id}
                   className={cn(
@@ -464,6 +473,272 @@ export default function VerificationPage() {
               <p className="text-xs text-white/30 mt-2">
                 CNIC: {cnicViewer.cnicNumber}
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Worker Detail Modal */}
+      {detailWorker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={() => setDetailWorker(null)}
+          />
+          <div className="relative glass-card w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+            {/* Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between p-5 border-b border-white/5 bg-gray-900/90 backdrop-blur-md">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center text-sm font-bold text-orange-400">
+                  {getInitials(detailWorker.profile?.full_name || 'W')}
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold text-white">{detailWorker.profile?.full_name || 'Unknown'}</h2>
+                  <p className="text-xs text-white/40">Worker Profile Details</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setDetailWorker(null)}
+                className="p-2 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-5">
+              {/* Personal Information */}
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <User className="w-4 h-4 text-emerald-400" />
+                  <h3 className="text-sm font-semibold text-white/80">Personal Information</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Full Name', value: detailWorker.profile?.full_name },
+                    { label: 'Email', value: detailWorker.profile?.email },
+                    { label: 'Phone', value: detailWorker.profile?.phone },
+                    { label: 'Gender', value: detailWorker.gender ? detailWorker.gender.charAt(0).toUpperCase() + detailWorker.gender.slice(1) : null },
+                    { label: 'Date of Birth', value: detailWorker.date_of_birth ? formatDate(detailWorker.date_of_birth) : null },
+                    { label: 'City', value: detailWorker.city },
+                    { label: 'Province', value: detailWorker.province },
+                    { label: 'Address', value: detailWorker.address },
+                  ].map((item) => (
+                    <div key={item.label} className={item.label === 'Address' ? 'col-span-2' : ''}>
+                      <p className="text-[10px] text-white/30 uppercase tracking-wider mb-0.5">{item.label}</p>
+                      <p className="text-xs text-white/70">{item.value || '—'}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Bio */}
+              {detailWorker.bio && (
+                <section>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Info className="w-4 h-4 text-blue-400" />
+                    <h3 className="text-sm font-semibold text-white/80">Bio</h3>
+                  </div>
+                  <p className="text-xs text-white/60 leading-relaxed bg-white/3 p-3 rounded-lg border border-white/5">{detailWorker.bio}</p>
+                </section>
+              )}
+
+              {/* CNIC */}
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <ShieldCheck className="w-4 h-4 text-violet-400" />
+                  <h3 className="text-sm font-semibold text-white/80">CNIC Verification</h3>
+                </div>
+                <div className="mb-3">
+                  <p className="text-[10px] text-white/30 uppercase tracking-wider mb-0.5">CNIC Number</p>
+                  <p className="text-xs text-white/70 font-mono">{detailWorker.cnic_number || '—'}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Front Side</p>
+                    {detailWorker.cnic_front_url ? (
+                      <div
+                        className="relative rounded-lg overflow-hidden border border-white/10 cursor-pointer group hover:border-white/20 transition-all"
+                        onClick={() => {
+                          setDetailWorker(null);
+                          setCnicViewer({
+                            url: detailWorker.cnic_front_url!,
+                            label: 'CNIC Front',
+                            workerName: detailWorker.profile?.full_name || 'Unknown',
+                            cnicNumber: detailWorker.cnic_number || 'N/A',
+                          });
+                        }}
+                      >
+                        <img src={detailWorker.cnic_front_url} alt="CNIC Front" className="w-full h-32 object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Eye className="w-5 h-5 text-white" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="h-32 rounded-lg bg-white/[0.02] border border-white/5 flex items-center justify-center">
+                        <FileWarning className="w-5 h-5 text-white/15" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider mb-1">Back Side</p>
+                    {detailWorker.cnic_back_url ? (
+                      <div
+                        className="relative rounded-lg overflow-hidden border border-white/10 cursor-pointer group hover:border-white/20 transition-all"
+                        onClick={() => {
+                          setDetailWorker(null);
+                          setCnicViewer({
+                            url: detailWorker.cnic_back_url!,
+                            label: 'CNIC Back',
+                            workerName: detailWorker.profile?.full_name || 'Unknown',
+                            cnicNumber: detailWorker.cnic_number || 'N/A',
+                          });
+                        }}
+                      >
+                        <img src={detailWorker.cnic_back_url} alt="CNIC Back" className="w-full h-32 object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Eye className="w-5 h-5 text-white" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="h-32 rounded-lg bg-white/[0.02] border border-white/5 flex items-center justify-center">
+                        <FileWarning className="w-5 h-5 text-white/15" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              {/* Skills */}
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <Briefcase className="w-4 h-4 text-amber-400" />
+                  <h3 className="text-sm font-semibold text-white/80">Skills</h3>
+                </div>
+                {detailWorker.skills && detailWorker.skills.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {detailWorker.skills.map((skill) => (
+                      <span
+                        key={skill.id}
+                        className="px-2.5 py-1 text-xs bg-orange-500/10 text-orange-400 rounded-lg border border-orange-500/20"
+                      >
+                        {skill.category?.name || 'Skill'}
+                        {skill.experience_years ? ` — ${skill.experience_years}y exp` : ''}
+                        {skill.is_primary && <span className="ml-1 text-[10px] text-orange-300">(Primary)</span>}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-white/30">No skills listed</p>
+                )}
+              </section>
+
+              {/* Professional */}
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <Briefcase className="w-4 h-4 text-cyan-400" />
+                  <h3 className="text-sm font-semibold text-white/80">Professional Details</h3>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider mb-0.5">Experience</p>
+                    <p className="text-xs text-white/70">
+                      {detailWorker.skills?.find((s) => s.is_primary)?.experience_years
+                        ? `${detailWorker.skills.find((s) => s.is_primary)!.experience_years} years`
+                        : '—'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider mb-0.5">Hourly Rate</p>
+                    <p className="text-xs text-white/70">{detailWorker.hourly_rate ? `PKR ${detailWorker.hourly_rate}/hr` : '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider mb-0.5">Availability</p>
+                    <p className="text-xs text-white/70">
+                      <span className={detailWorker.availability ? 'text-emerald-400' : 'text-red-400'}>
+                        {detailWorker.availability ? 'Available' : 'Unavailable'}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Bank Details */}
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <Building2 className="w-4 h-4 text-blue-400" />
+                  <h3 className="text-sm font-semibold text-white/80">Bank Details</h3>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider mb-0.5">Bank Name</p>
+                    <p className="text-xs text-white/70">{detailWorker.bank_name || '—'}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider mb-0.5">Account Number</p>
+                    <p className="text-xs text-white/70 font-mono">
+                      {detailWorker.account_number
+                        ? `${detailWorker.account_number.slice(0, 4)}${'•'.repeat(Math.max(0, detailWorker.account_number.length - 8))}${detailWorker.account_number.length > 4 ? detailWorker.account_number.slice(-4) : ''}`
+                        : '—'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider mb-0.5">Account Title</p>
+                    <p className="text-xs text-white/70">{detailWorker.account_title || '—'}</p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Location */}
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <MapPin className="w-4 h-4 text-rose-400" />
+                  <h3 className="text-sm font-semibold text-white/80">Location</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider mb-0.5">Coordinates</p>
+                    <p className="text-xs text-white/70 font-mono">
+                      {detailWorker.latitude && detailWorker.longitude
+                        ? `${detailWorker.latitude.toFixed(4)}, ${detailWorker.longitude.toFixed(4)}`
+                        : '—'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider mb-0.5">Map</p>
+                    {detailWorker.latitude && detailWorker.longitude ? (
+                      <a
+                        href={`https://www.google.com/maps?q=${detailWorker.latitude},${detailWorker.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition-colors"
+                      >
+                        <Navigation className="w-3 h-3" />
+                        Open in Maps
+                      </a>
+                    ) : (
+                      <p className="text-xs text-white/30">—</p>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              {/* Registration */}
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <Calendar className="w-4 h-4 text-emerald-400" />
+                  <h3 className="text-sm font-semibold text-white/80">Registration</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider mb-0.5">Registered</p>
+                    <p className="text-xs text-white/70">{formatDate(detailWorker.created_at)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-white/30 uppercase tracking-wider mb-0.5">Status</p>
+                    <p className="text-xs text-white/70 capitalize">{detailWorker.status}</p>
+                  </div>
+                </div>
+              </section>
             </div>
           </div>
         </div>
